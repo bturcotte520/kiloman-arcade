@@ -2,6 +2,8 @@ import React, { useRef, useEffect } from 'react';
 import { GameStatus, PlayerState, GameConfig, LevelEntity, MonsterState } from './types';
 import { LEVEL_1 } from './levelData';
 
+const INPUT_EVENT_NAME = 'kiloman:input';
+
 interface GameCanvasProps {
   gameState: GameStatus;
   setGameState: (status: GameStatus) => void;
@@ -82,9 +84,22 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, jumpMo
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
 
+    // Touch/mobile integration: TouchControls dispatches a CustomEvent that we translate into key state.
+    const handleVirtualInput = (e: Event) => {
+      const ev = e as CustomEvent<{ code: string; pressed: boolean }>;
+      if (!ev.detail) return;
+
+      // Only accept the small set of virtual inputs we actually support.
+      if (!['ArrowLeft', 'ArrowRight', 'Space'].includes(ev.detail.code)) return;
+      keysRef.current[ev.detail.code] = ev.detail.pressed;
+    };
+
+    window.addEventListener(INPUT_EVENT_NAME, handleVirtualInput as EventListener);
+
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener(INPUT_EVENT_NAME, handleVirtualInput as EventListener);
     };
   }, []);
 

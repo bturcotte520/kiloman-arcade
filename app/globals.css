@@ -32,3 +32,63 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* --- KILO MAN: Touch Controls --- */
+
+.kiloman-touch-controls {
+  position: absolute;
+  inset: 0;
+  /* Prevent page scrolling/zoom gestures while interacting with controls */
+  touch-action: none;
+  overscroll-behavior: contain;
+}
+
+.kiloman-touch-controls__cluster {
+  position: absolute;
+  bottom: 16px;
+  display: flex;
+  gap: 12px;
+}
+
+.kiloman-touch-controls__cluster--left {
+  left: 16px;
+}
+
+.kiloman-touch-controls__cluster--right {
+  right: 16px;
+}
+
+.kiloman-touch-button {
+  width: 64px;
+  height: 64px;
+  border-radius: 9999px;
+  border: 2px solid rgba(234, 179, 8, 0.9); /* yellow-500-ish */
+  background: rgba(0, 0, 0, 0.6);
+  color: rgba(234, 179, 8, 0.95);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-weight: 700;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: none;
+}
+
+.kiloman-touch-button:active {
+  transform: translateY(1px);
+  background: rgba(234, 179, 8, 0.15);
+}
+
+.kiloman-touch-button--action {
+  width: 84px;
+  height: 84px;
+  border-radius: 16px;
+  padding: 0 12px;
+  font-size: 14px;
+}
+
+/* Extra gate (in addition to JS gating) to ensure desktop never shows controls. */
+@media (pointer: fine) and (hover: hover) {
+  .kiloman-touch-controls {
+    display: none;
+  }
+}

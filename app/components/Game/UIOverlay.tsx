@@ -1,5 +1,6 @@
 import React from 'react';
 import { GameStatus, CompletionData } from './types';
+import TouchControls from './TouchControls';
 
 interface UIOverlayProps {
   gameState: GameStatus;
@@ -97,6 +98,9 @@ const UIOverlay: React.FC<UIOverlayProps> = ({
           </div>
         </div>
       )}
+
+      {/* Mobile/touch controls (only renders on touch-ish, small viewports) */}
+      <TouchControls active={gameState === 'playing'} />
     </div>
   );
 };
