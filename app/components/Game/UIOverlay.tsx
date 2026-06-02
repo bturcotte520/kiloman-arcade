@@ -245,9 +245,8 @@ const UIOverlay: React.FC<UIOverlayProps> = ({
                   </div>
 
                   <div className="arcade-instructions mb-8">
-                    <p>D-PAD LEFT / RIGHT: PICK SLOT</p>
-                    <p>D-PAD UP / DOWN: CHANGE LETTER</p>
-                    <p>BUTTON: START 3-LIFE TURN</p>
+                    <p>Jump / Accept: Red Button</p>
+                    <p>Move: Joystick</p>
                   </div>
 
                   <button onClick={startTurn} disabled={!canStart} className="arcade-button text-3xl disabled:opacity-50 disabled:translate-y-0 disabled:shadow-none">
