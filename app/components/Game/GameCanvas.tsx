@@ -315,7 +315,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
 
   // Reset Game State
   useEffect(() => {
-    if (gameState === 'playing') {
+    if (gameState === 'countdown') {
       playerRef.current = {
         x: 50,
         y: 350,
@@ -393,84 +393,155 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
       for (let repeat = -1; repeat <= 1; repeat++) {
         const originX = repeat * VEGAS_SCENE_WIDTH - offset;
 
-        // Hotel towers
-        ctx.fillStyle = '#111047';
-        ctx.fillRect(originX + 80, baseY - 155, 120, 155);
-        ctx.fillRect(originX + 260, baseY - 210, 92, 210);
-        ctx.fillRect(originX + 590, baseY - 180, 150, 180);
-        ctx.fillRect(originX + 1040, baseY - 235, 110, 235);
+        // Layered strip silhouettes with deliberate rooflines instead of loose blocks.
+        ctx.fillStyle = '#0b102f';
+        ctx.fillRect(originX + 58, baseY - 250, 144, 250);
+        ctx.fillRect(originX + 252, baseY - 310, 112, 310);
+        ctx.fillRect(originX + 575, baseY - 266, 176, 266);
+        ctx.fillRect(originX + 1020, baseY - 335, 138, 335);
 
-        ctx.fillStyle = 'rgba(250, 204, 21, 0.55)';
-        for (let i = 0; i < 9; i++) {
-          ctx.fillRect(originX + 100 + (i % 3) * 30, baseY - 135 + Math.floor(i / 3) * 34, 8, 14);
-          ctx.fillRect(originX + 280 + (i % 2) * 34, baseY - 185 + Math.floor(i / 2) * 32, 8, 12);
-          ctx.fillRect(originX + 620 + (i % 4) * 28, baseY - 150 + Math.floor(i / 4) * 42, 7, 12);
+        ctx.fillStyle = '#15115a';
+        ctx.beginPath();
+        ctx.moveTo(originX + 58, baseY - 250);
+        ctx.lineTo(originX + 130, baseY - 292);
+        ctx.lineTo(originX + 202, baseY - 250);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillRect(originX + 285, baseY - 354, 46, 44);
+        ctx.beginPath();
+        ctx.moveTo(originX + 575, baseY - 266);
+        ctx.lineTo(originX + 663, baseY - 318);
+        ctx.lineTo(originX + 751, baseY - 266);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillRect(originX + 1057, baseY - 382, 64, 47);
+
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.55)';
+        ctx.lineWidth = 2;
+        [58, 252, 575, 1020].forEach((towerX, towerIndex) => {
+          const towerW = [144, 112, 176, 138][towerIndex];
+          const towerH = [250, 310, 266, 335][towerIndex];
+          for (let stripe = 1; stripe < 4; stripe++) {
+            const sx = originX + towerX + (towerW / 4) * stripe;
+            ctx.beginPath();
+            ctx.moveTo(sx, baseY - towerH + 12);
+            ctx.lineTo(sx, baseY - 8);
+            ctx.stroke();
+          }
+        });
+
+        ctx.fillStyle = 'rgba(250, 204, 21, 0.62)';
+        for (let i = 0; i < 30; i++) {
+          ctx.fillRect(originX + 82 + (i % 4) * 28, baseY - 220 + Math.floor(i / 4) * 28, 8, 12);
+          ctx.fillRect(originX + 278 + (i % 3) * 28, baseY - 280 + Math.floor(i / 3) * 28, 8, 11);
+          ctx.fillRect(originX + 606 + (i % 5) * 28, baseY - 232 + Math.floor(i / 5) * 30, 7, 12);
+          ctx.fillRect(originX + 1048 + (i % 4) * 24, baseY - 305 + Math.floor(i / 4) * 30, 7, 12);
         }
 
-        // Welcome sign
+        // Welcome sign, with posts and starburst top.
+        ctx.strokeStyle = '#7f1d1d';
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(originX + 405, baseY - 42);
+        ctx.lineTo(originX + 405, baseY);
+        ctx.moveTo(originX + 455, baseY - 42);
+        ctx.lineTo(originX + 455, baseY);
+        ctx.stroke();
         ctx.fillStyle = '#fef3c7';
         ctx.strokeStyle = '#ef4444';
         ctx.lineWidth = 4;
         ctx.beginPath();
-        ctx.moveTo(originX + 430, baseY - 150);
-        ctx.lineTo(originX + 520, baseY - 125);
-        ctx.lineTo(originX + 520, baseY - 65);
-        ctx.lineTo(originX + 430, baseY - 40);
-        ctx.lineTo(originX + 340, baseY - 65);
-        ctx.lineTo(originX + 340, baseY - 125);
+        ctx.moveTo(originX + 430, baseY - 198);
+        ctx.lineTo(originX + 535, baseY - 166);
+        ctx.lineTo(originX + 535, baseY - 80);
+        ctx.lineTo(originX + 430, baseY - 42);
+        ctx.lineTo(originX + 325, baseY - 80);
+        ctx.lineTo(originX + 325, baseY - 166);
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
+        ctx.fillStyle = '#facc15';
+        ctx.beginPath();
+        for (let point = 0; point < 16; point++) {
+          const radius = point % 2 === 0 ? 28 : 10;
+          const angle = (Math.PI * 2 * point) / 16;
+          const px = originX + 430 + Math.cos(angle) * radius;
+          const py = baseY - 214 + Math.sin(angle) * radius;
+          if (point === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.fill();
         ctx.fillStyle = '#7f1d1d';
-        ctx.font = 'bold 15px monospace';
+        ctx.font = 'bold 16px monospace';
         ctx.textAlign = 'center';
-        ctx.fillText('WELCOME', originX + 430, baseY - 112);
-        ctx.fillText('TO KILO', originX + 430, baseY - 90);
-        ctx.fillText('VEGAS', originX + 430, baseY - 68);
+        ctx.fillText('WELCOME', originX + 430, baseY - 154);
+        ctx.fillText('TO KILO', originX + 430, baseY - 124);
+        ctx.fillText('VEGAS', originX + 430, baseY - 94);
 
-        // Casino neon signs
+        // Casino neon signs with framed detail.
         ctx.fillStyle = '#ec4899';
         ctx.shadowColor = '#ec4899';
         ctx.shadowBlur = 16;
-        ctx.fillRect(originX + 790, baseY - 122, 170, 72);
+        ctx.fillRect(originX + 792, baseY - 178, 182, 96);
         ctx.fillStyle = '#0f172a';
-        ctx.fillRect(originX + 800, baseY - 112, 150, 52);
+        ctx.fillRect(originX + 804, baseY - 166, 158, 72);
         ctx.fillStyle = '#facc15';
         ctx.font = 'bold 24px monospace';
-        ctx.fillText('SLOTS', originX + 875, baseY - 78);
+        ctx.fillText('SLOTS', originX + 883, baseY - 124);
+        ctx.fillStyle = '#fef3c7';
+        ctx.font = 'bold 12px monospace';
+        ctx.fillText('OPEN 24H', originX + 883, baseY - 103);
 
         ctx.shadowColor = '#38bdf8';
         ctx.shadowBlur = 18;
         ctx.strokeStyle = '#38bdf8';
         ctx.lineWidth = 5;
         ctx.beginPath();
-        ctx.arc(originX + 1240, baseY - 95, 46, 0, Math.PI * 2);
+        ctx.arc(originX + 1240, baseY - 158, 58, 0, Math.PI * 2);
         ctx.stroke();
         ctx.fillStyle = '#bfdbfe';
-        ctx.font = 'bold 18px monospace';
-        ctx.fillText('777', originX + 1240, baseY - 88);
+        ctx.font = 'bold 24px monospace';
+        ctx.fillText('777', originX + 1240, baseY - 150);
+        ctx.font = 'bold 10px monospace';
+        ctx.fillText('LUCKY', originX + 1240, baseY - 127);
         ctx.shadowBlur = 0;
       }
 
-      // Sky searchlight sweep
-      const sweepX = wrapSceneX(cameraX * 0.08 + frameCountRef.current * 1.2, w + 260) - 130;
-      const beam = ctx.createLinearGradient(sweepX, h, sweepX + 90, 0);
-      beam.addColorStop(0, 'rgba(250, 204, 21, 0)');
-      beam.addColorStop(0.45, 'rgba(250, 204, 21, 0.13)');
-      beam.addColorStop(1, 'rgba(250, 204, 21, 0)');
+      // UFO with tractor beam in place of the old spotlight.
+      const ufoX = wrapSceneX(cameraX * 0.06 + frameCountRef.current * 0.85, w + 360) - 180;
+      const ufoY = Math.max(72, baseY - 380 + Math.sin(frameCountRef.current * 0.025) * 26);
+      const beam = ctx.createLinearGradient(ufoX, ufoY + 18, ufoX, baseY + 40);
+      beam.addColorStop(0, 'rgba(125, 249, 255, 0.28)');
+      beam.addColorStop(0.55, 'rgba(125, 249, 255, 0.09)');
+      beam.addColorStop(1, 'rgba(125, 249, 255, 0)');
       ctx.fillStyle = beam;
       ctx.beginPath();
-      ctx.moveTo(sweepX - 70, h);
-      ctx.lineTo(sweepX + 18, baseY - 260);
-      ctx.lineTo(sweepX + 118, baseY - 260);
-      ctx.lineTo(sweepX + 210, h);
+      ctx.moveTo(ufoX - 36, ufoY + 18);
+      ctx.lineTo(ufoX + 36, ufoY + 18);
+      ctx.lineTo(ufoX + 122, baseY + 40);
+      ctx.lineTo(ufoX - 122, baseY + 40);
       ctx.closePath();
       ctx.fill();
+      ctx.fillStyle = '#94a3b8';
+      ctx.beginPath();
+      ctx.ellipse(ufoX, ufoY, 70, 18, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.ellipse(ufoX, ufoY - 10, 34, 18, 0, Math.PI, 0);
+      ctx.fill();
+      ctx.fillStyle = '#67e8f9';
+      for (let light = -2; light <= 2; light++) {
+        ctx.beginPath();
+        ctx.arc(ufoX + light * 22, ufoY + 8, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
       ctx.restore();
     };
 
-    drawVegasStrip(0.16, h - 118 - cameraY * 0.05, 0.88);
+    drawVegasStrip(0.16, h - 82 - cameraY * 0.05, 0.9);
 
     // Parallax Mountains (Far)
     ctx.fillStyle = '#1e1b4b'; // Dark Indigo
