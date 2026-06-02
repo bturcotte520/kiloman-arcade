@@ -1,6 +1,4 @@
-import { mkdir, readFile, writeFile } from 'fs/promises';
-import path from 'path';
-import { randomUUID } from 'crypto';
+import postgres from 'postgres';
 
 export interface StoredScore {
   id: string;
@@ -10,50 +8,59 @@ export interface StoredScore {
   date: string;
 }
 
-const SCORES_FILE = path.join(process.cwd(), 'data', 'scores.json');
+let client: postgres.Sql | null = null;
 
-async function readScores(): Promise<StoredScore[]> {
-  try {
-    const contents = await readFile(SCORES_FILE, 'utf8');
-    const parsed = JSON.parse(contents) as StoredScore[];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (error) {
-    if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
-      return [];
-    }
-    throw error;
+function sql() {
+  if (!process.env.POSTGRES_URL) {
+    throw new Error('POSTGRES_URL is required for persistent score storage');
   }
+
+  client ??= postgres(process.env.POSTGRES_URL, { ssl: 'require' });
+  return client;
 }
 
-async function writeScores(scores: StoredScore[]) {
-  await mkdir(path.dirname(SCORES_FILE), { recursive: true });
-  await writeFile(SCORES_FILE, JSON.stringify(scores, null, 2));
+function normalizeScore(row: {
+  id: string;
+  initials: string;
+  score: number;
+  distance: number;
+  date: Date | string;
+}): StoredScore {
+  return {
+    id: row.id,
+    initials: row.initials,
+    score: row.score,
+    distance: row.distance,
+    date: row.date instanceof Date ? row.date.toISOString() : row.date,
+  };
 }
 
 export async function getTopScores() {
-  const scores = await readScores();
-  return scores.sort((a, b) => b.score - a.score).slice(0, 10);
+  const rows = await sql()<StoredScore[]>`
+    select id, initials, score, distance, date
+    from scores
+    order by score desc, date asc
+    limit 10
+  `;
+  return rows.map(normalizeScore);
 }
 
 export async function addScore(input: { initials: string; score: number; distance: number }) {
-  const scores = await readScores();
-  const entry: StoredScore = {
-    id: randomUUID(),
-    initials: input.initials.slice(0, 5).toUpperCase(),
-    score: input.score,
-    distance: input.distance,
-    date: new Date().toISOString(),
-  };
-  const nextScores = [...scores, entry].sort((a, b) => b.score - a.score).slice(0, 100);
-  await writeScores(nextScores);
-  return entry;
+  const rows = await sql()<StoredScore[]>`
+    insert into scores (initials, score, distance)
+    values (${input.initials.slice(0, 5).toUpperCase()}, ${input.score}, ${input.distance})
+    returning id, initials, score, distance, date
+  `;
+  return normalizeScore(rows[0]);
 }
 
 export async function deleteScore(id: string) {
-  const scores = await readScores();
-  const nextScores = scores.filter((score) => score.id !== id);
-  await writeScores(nextScores);
-  return nextScores.length !== scores.length;
+  const rows = await sql()<Array<{ id: string }>>`
+    delete from scores
+    where id = ${id}
+    returning id
+  `;
+  return rows.length > 0;
 }
 
 export function isAdminSecret(secret: string | null) {
