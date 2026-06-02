@@ -160,27 +160,25 @@ body {
   box-shadow: 0 0 34px rgba(250, 204, 21, 0.28), inset 0 0 18px rgba(0, 0, 0, 0.7);
 }
 
-.vegas-bulb-frame::before,
-.vegas-bulb-frame::after {
-  content: "";
+.vegas-bulb-ring {
   position: absolute;
   inset: 0;
-  border-radius: 28px;
   pointer-events: none;
-  background:
-    radial-gradient(circle, #fff7ad 0 19%, #facc15 22% 34%, transparent 37%) 0 0 / 42px 42px repeat-x,
-    radial-gradient(circle, #fff7ad 0 19%, #facc15 22% 34%, transparent 37%) 0 100% / 42px 42px repeat-x,
-    radial-gradient(circle, #fff7ad 0 19%, #facc15 22% 34%, transparent 37%) 0 0 / 42px 42px repeat-y,
-    radial-gradient(circle, #fff7ad 0 19%, #facc15 22% 34%, transparent 37%) 100% 0 / 42px 42px repeat-y;
-  background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
-  animation: vegas-bulb-lit-a 360ms steps(1, end) infinite;
+  z-index: 2;
 }
 
-.vegas-bulb-frame::after {
-  background-position: 21px 0, -21px 100%, 0 21px, 100% -21px;
-  filter: blur(8px);
-  opacity: 0.65;
-  animation-name: vegas-bulb-lit-b;
+.vegas-bulb {
+  --bulb-size: 18px;
+  position: absolute;
+  width: var(--bulb-size);
+  height: var(--bulb-size);
+  border-radius: 9999px;
+  background: radial-gradient(circle at 35% 30%, #fff8bf 0 14%, #ca8a04 22% 52%, #78350f 70%);
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.75), 0 0 0 2px #78350f;
+  opacity: 0.52;
+  transform: translate(-50%, -50%);
+  animation: vegas-single-bulb-chase 2s steps(1, end) infinite;
+  animation-delay: calc(var(--bulb-index) * -50ms);
 }
 
 .arcade-menu {
@@ -335,25 +333,16 @@ body {
   }
 }
 
-@keyframes vegas-bulb-lit-a {
-  0%, 49% {
+@keyframes vegas-single-bulb-chase {
+  0%, 2.5% {
     opacity: 1;
-    filter: brightness(1.5) drop-shadow(0 0 8px rgba(250, 204, 21, 0.95));
+    background: radial-gradient(circle at 35% 30%, #ffffff 0 20%, #fde68a 26% 48%, #f59e0b 62%);
+    box-shadow: 0 0 0 2px #fef3c7, 0 0 18px rgba(250, 204, 21, 1), 0 0 34px rgba(250, 204, 21, 0.75);
   }
-  50%, 100% {
-    opacity: 0.38;
-    filter: brightness(0.65);
-  }
-}
-
-@keyframes vegas-bulb-lit-b {
-  0%, 49% {
-    opacity: 0.28;
-    filter: blur(8px) brightness(0.65);
-  }
-  50%, 100% {
-    opacity: 0.9;
-    filter: blur(8px) brightness(1.7) drop-shadow(0 0 12px rgba(250, 204, 21, 0.9));
+  2.6%, 100% {
+    opacity: 0.52;
+    background: radial-gradient(circle at 35% 30%, #fff8bf 0 14%, #ca8a04 22% 52%, #78350f 70%);
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.75), 0 0 0 2px #78350f;
   }
 }
 

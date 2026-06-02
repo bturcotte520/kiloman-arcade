@@ -8,6 +8,7 @@ const MENU_NAV_EVENT_NAME = 'kiloman:menu-nav';
 const INITIAL_CHOICES = [' ', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')];
 const INITIAL_SLOT_COUNT = 5;
 const DEATH_ACTION_DELAY_MS = 900;
+const VEGAS_BULB_COUNT = 40;
 
 interface UIOverlayProps {
   gameState: GameStatus;
@@ -28,6 +29,27 @@ function nextLetter(letter: string, delta: number) {
   const index = INITIAL_CHOICES.indexOf(letter);
   return INITIAL_CHOICES[(index + delta + INITIAL_CHOICES.length) % INITIAL_CHOICES.length];
 }
+
+const VegasBulbRing = () => (
+  <div className="vegas-bulb-ring" aria-hidden="true">
+    {Array.from({ length: VEGAS_BULB_COUNT }, (_, index) => {
+      const progress = index / VEGAS_BULB_COUNT;
+      let style: React.CSSProperties;
+
+      if (progress < 0.25) {
+        style = { left: `${progress * 4 * 100}%`, top: '0%' };
+      } else if (progress < 0.5) {
+        style = { left: '100%', top: `${(progress - 0.25) * 4 * 100}%` };
+      } else if (progress < 0.75) {
+        style = { left: `${(1 - (progress - 0.5) * 4) * 100}%`, top: '100%' };
+      } else {
+        style = { left: '0%', top: `${(1 - (progress - 0.75) * 4) * 100}%` };
+      }
+
+      return <span key={index} className="vegas-bulb" style={{ ...style, '--bulb-index': index } as React.CSSProperties} />;
+    })}
+  </div>
+);
 
 const UIOverlay: React.FC<UIOverlayProps> = ({
   gameState,
@@ -196,6 +218,7 @@ const UIOverlay: React.FC<UIOverlayProps> = ({
 
             <div className="grid lg:grid-cols-[minmax(0,1fr)_380px] gap-6">
               <div className="vegas-bulb-frame">
+                <VegasBulbRing />
                 <div className="arcade-panel arcade-menu p-8 text-center h-full">
                   <p className="arcade-copy text-2xl mb-8">ENTER 2-5 INITIALS</p>
 
@@ -226,6 +249,7 @@ const UIOverlay: React.FC<UIOverlayProps> = ({
               </div>
 
               <div className="vegas-bulb-frame">
+                <VegasBulbRing />
                 <div className="arcade-panel p-6 text-yellow-300 h-full">
                   <h2 className="arcade-title text-4xl mb-5 text-center">TOP SCORES</h2>
                   <div className="mb-5 flex flex-col gap-3">
