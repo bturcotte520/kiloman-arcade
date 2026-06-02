@@ -593,22 +593,30 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
         }
         
         if (entity.type === 'platform') {
+          const previousX = player.x - player.vx;
+          const previousY = player.y - player.vy;
+          const previousBottom = previousY + player.height;
+          const previousRight = previousX + player.width;
+          const landingOnTop = player.vy >= 0 && previousBottom <= entity.y + 6;
+          const hittingBottom = player.vy < 0 && previousY >= entity.y + entity.h - 6;
+          const hittingLeftSide = player.vx > 0 && previousRight <= entity.x + 4;
+          const hittingRightSide = player.vx < 0 && previousX >= entity.x + entity.w - 4;
           const overlapX = (player.width + entity.w) / 2 - Math.abs((player.x + player.width / 2) - (entity.x + entity.w / 2));
           const overlapY = (player.height + entity.h) / 2 - Math.abs((player.y + player.height / 2) - (entity.y + entity.h / 2));
 
-          if (overlapX < overlapY) {
-            if (player.vx > 0) player.x = entity.x - player.width;
-            else player.x = entity.x + entity.w;
+          if (landingOnTop) {
+            player.y = entity.y - player.height;
+            player.isGrounded = true;
+            player.vy = 0;
+          } else if (hittingBottom) {
+            player.y = entity.y + entity.h;
+            player.vy = 0;
+          } else if (overlapX < overlapY && hittingLeftSide) {
+            player.x = entity.x - player.width;
             player.vx = 0;
-          } else {
-            if (player.vy > 0) {
-              player.y = entity.y - player.height;
-              player.isGrounded = true;
-              player.vy = 0;
-            } else {
-              player.y = entity.y + entity.h;
-              player.vy = 0;
-            }
+          } else if (overlapX < overlapY && hittingRightSide) {
+            player.x = entity.x + entity.w;
+            player.vx = 0;
           }
         }
       }
