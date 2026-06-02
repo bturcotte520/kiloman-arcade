@@ -17,6 +17,10 @@ const AUTOSCROLL_MAX_SPEED = PLAYER_MAX_SPEED * 0.9;
 const WALL_PADDING = 18;
 const MONSTER_PLATFORM_WIDTH_BONUS = 35;
 const FALL_DEATH_SCREEN_MARGIN = 220;
+const START_PLATFORM_X = 40;
+const START_PLATFORM_Y = GROUND_Y - 40;
+const START_PLATFORM_WIDTH = 520;
+const START_CHUNK_PLATFORM_SHIFT = 430;
 
 const seededRandom = (seed: number) => {
   const value = Math.sin(seed * 12.9898) * 43758.5453;
@@ -113,10 +117,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
 
     if (chunk === 0) {
       entities.push(
-        { id: 'start-0', x: 0, y: GROUND_Y - 40, w: 260, h: PLATFORM_HEIGHT, type: 'platform' },
-        { id: 'step-0-0', x: 330, y: 455, w: 170, h: PLATFORM_HEIGHT, type: 'platform' },
-        { id: 'step-0-1', x: 580, y: 420, w: 170, h: PLATFORM_HEIGHT, type: 'platform' },
-        { id: 'step-0-2', x: 825, y: 440, w: 150, h: PLATFORM_HEIGHT, type: 'platform' }
+        { id: 'starter-platform', x: START_PLATFORM_X, y: START_PLATFORM_Y, w: START_PLATFORM_WIDTH, h: PLATFORM_HEIGHT, type: 'start' },
+        { id: 'start-0', x: 0 + START_CHUNK_PLATFORM_SHIFT, y: GROUND_Y - 40, w: 260, h: PLATFORM_HEIGHT, type: 'platform' },
+        { id: 'step-0-0', x: 330 + START_CHUNK_PLATFORM_SHIFT, y: 455, w: 170, h: PLATFORM_HEIGHT, type: 'platform' },
+        { id: 'step-0-1', x: 580 + START_CHUNK_PLATFORM_SHIFT, y: 420, w: 170, h: PLATFORM_HEIGHT, type: 'platform' },
+        { id: 'step-0-2', x: 825 + START_CHUNK_PLATFORM_SHIFT, y: 440, w: 150, h: PLATFORM_HEIGHT, type: 'platform' }
       );
       entitiesRef.current.push(...entities);
       generatedChunksRef.current.add(chunk);
@@ -430,6 +435,42 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
     ctx.strokeRect(x, y, entity.w, visualHeight);
   };
 
+  const drawStartArrow = (ctx: CanvasRenderingContext2D, entity: LevelEntity, cameraX: number, cameraY: number) => {
+    const blinkOn = Math.floor(frameCountRef.current / 24) % 2 === 0;
+    if (!blinkOn) return;
+
+    const centerX = entity.x + entity.w / 2 - cameraX;
+    const y = entity.y - cameraY - 82;
+    const arrowWidth = 150;
+    const arrowHeight = 52;
+
+    ctx.save();
+    ctx.fillStyle = '#facc15';
+    ctx.strokeStyle = '#7f1d1d';
+    ctx.lineWidth = 6;
+    ctx.shadowColor = 'rgba(250, 204, 21, 0.85)';
+    ctx.shadowBlur = 22;
+    ctx.beginPath();
+    ctx.moveTo(centerX - arrowWidth / 2, y + arrowHeight * 0.28);
+    ctx.lineTo(centerX + arrowWidth * 0.12, y + arrowHeight * 0.28);
+    ctx.lineTo(centerX + arrowWidth * 0.12, y);
+    ctx.lineTo(centerX + arrowWidth / 2, y + arrowHeight / 2);
+    ctx.lineTo(centerX + arrowWidth * 0.12, y + arrowHeight);
+    ctx.lineTo(centerX + arrowWidth * 0.12, y + arrowHeight * 0.72);
+    ctx.lineTo(centerX - arrowWidth / 2, y + arrowHeight * 0.72);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#111827';
+    ctx.font = 'bold 22px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('GO', centerX - 24, y + arrowHeight / 2);
+    ctx.restore();
+  };
+
   const drawHumanoid = (ctx: CanvasRenderingContext2D, p: PlayerState, cameraX: number, cameraY: number) => {
     const x = p.x - cameraX;
     const y = p.y - cameraY;
@@ -706,10 +747,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
 
     // Draw Level Entities
     entitiesRef.current.forEach(entity => {
-      if (entity.type === 'start' || entity.type === 'monster') return;
+      if (entity.type === 'monster') return;
       
-      if (entity.type === 'platform') {
+      if (entity.type === 'platform' || entity.type === 'start') {
         drawPlatform(ctx, entity, cameraX, cameraY);
+        if (entity.type === 'start') drawStartArrow(ctx, entity, cameraX, cameraY);
       } else if (entity.type === 'hazard') {
         ctx.fillStyle = '#ef4444'; // Red
         const x = entity.x - cameraX;
