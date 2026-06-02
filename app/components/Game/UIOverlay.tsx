@@ -21,6 +21,7 @@ interface UIOverlayProps {
   turnBest: ScoreState;
   leaderboard: LeaderboardEntry[];
   countdown: number;
+  onDeleteScore: (id: string, adminSecret: string) => Promise<boolean>;
 }
 
 function nextLetter(letter: string, delta: number) {
@@ -40,10 +41,14 @@ const UIOverlay: React.FC<UIOverlayProps> = ({
   turnBest,
   leaderboard,
   countdown,
+  onDeleteScore,
 }) => {
   const [initials, setInitials] = useState(['A', 'A', ' ', ' ', ' ']);
   const [selectedInitial, setSelectedInitial] = useState(0);
   const [deathActionReady, setDeathActionReady] = useState(true);
+  const [adminMode, setAdminMode] = useState(false);
+  const [adminSecret, setAdminSecret] = useState('');
+  const [adminError, setAdminError] = useState('');
   const primaryActionRef = useRef<(() => void) | null>(null);
   const initialsRef = useRef(initials);
   const selectedInitialRef = useRef(selectedInitial);
@@ -65,6 +70,14 @@ const UIOverlay: React.FC<UIOverlayProps> = ({
     if (!canStart) return;
     onStartTurn({ initials: enteredInitials });
   }, [canStart, enteredInitials, onStartTurn]);
+
+  const deleteScore = async (id: string) => {
+    setAdminError('');
+    const deleted = await onDeleteScore(id, adminSecret);
+    if (!deleted) {
+      setAdminError('BAD ADMIN CODE');
+    }
+  };
 
   useEffect(() => {
     if (gameState === 'start') {
@@ -207,6 +220,21 @@ const UIOverlay: React.FC<UIOverlayProps> = ({
 
             <div className="arcade-panel p-6 text-yellow-300">
               <h2 className="arcade-title text-4xl mb-5 text-center">TOP SCORES</h2>
+              <div className="mb-5 flex flex-col gap-3">
+                <button type="button" onClick={() => setAdminMode((value) => !value)} className="arcade-admin-button">
+                  {adminMode ? 'CLOSE ADMIN' : 'ADMIN'}
+                </button>
+                {adminMode && (
+                  <input
+                    value={adminSecret}
+                    onChange={(event) => setAdminSecret(event.target.value)}
+                    type="password"
+                    placeholder="ADMIN CODE"
+                    className="arcade-admin-input"
+                  />
+                )}
+                {adminError && <p className="arcade-help text-center text-red-300">{adminError}</p>}
+              </div>
               {leaderboard.length === 0 ? (
                 <p className="arcade-copy text-center">NO SCORES YET</p>
               ) : (
@@ -216,6 +244,11 @@ const UIOverlay: React.FC<UIOverlayProps> = ({
                       <span>{String(index + 1).padStart(2, '0')}</span>
                       <span>{entry.initials}</span>
                       <span>{entry.score.toLocaleString()}</span>
+                      {adminMode && (
+                        <button type="button" onClick={() => void deleteScore(entry.id)} className="arcade-delete-button">
+                          DEL
+                        </button>
+                      )}
                     </li>
                   ))}
                 </ol>

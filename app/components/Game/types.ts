@@ -46,6 +46,7 @@ export interface PlayerProfile {
 }
 
 export interface LeaderboardEntry extends PlayerProfile {
+  id: string;
   score: number;
   distance: number;
   date: string;

@@ -6,7 +6,6 @@ import UIOverlay from './UIOverlay';
 import { GameStatus, LeaderboardEntry, PlayerProfile, ScoreState } from './types';
 
 const MAX_LIVES = 3;
-const LEADERBOARD_KEY = 'kiloman:leaderboard';
 
 const GameContainer: React.FC = () => {
   const [gameState, setGameState] = useState<GameStatus>('start');
@@ -19,15 +18,16 @@ const GameContainer: React.FC = () => {
   const lastLossHandledRef = useRef(false);
 
   useEffect(() => {
-    const saved = window.localStorage.getItem(LEADERBOARD_KEY);
-    if (!saved) return;
-
-    try {
-      setLeaderboard(JSON.parse(saved) as LeaderboardEntry[]);
-    } catch {
-      setLeaderboard([]);
-    }
+    refreshLeaderboard();
   }, []);
+
+  const refreshLeaderboard = async () => {
+    const response = await fetch('/api/scores');
+    if (!response.ok) return;
+
+    const body = await response.json() as { scores?: LeaderboardEntry[] };
+    setLeaderboard(body.scores ?? []);
+  };
 
   useEffect(() => {
     if (gameState === 'countdown') {
@@ -57,12 +57,28 @@ const GameContainer: React.FC = () => {
     setLivesRemaining((lives) => Math.max(0, lives - 1));
   }, [gameState, score]);
 
-  const saveLeaderboard = (entry: LeaderboardEntry) => {
-    const nextLeaderboard = [...leaderboard, entry]
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 10);
-    setLeaderboard(nextLeaderboard);
-    window.localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(nextLeaderboard));
+  const saveLeaderboard = async (entry: Omit<LeaderboardEntry, 'id' | 'date'>) => {
+    const response = await fetch('/api/scores', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(entry),
+    });
+    if (!response.ok) return;
+
+    const body = await response.json() as { scores?: LeaderboardEntry[] };
+    setLeaderboard(body.scores ?? []);
+  };
+
+  const deleteLeaderboardScore = async (id: string, adminSecret: string) => {
+    const response = await fetch(`/api/scores/${id}`, {
+      method: 'DELETE',
+      headers: { 'x-admin-secret': adminSecret },
+    });
+    if (!response.ok) return false;
+
+    const body = await response.json() as { scores?: LeaderboardEntry[] };
+    setLeaderboard(body.scores ?? []);
+    return true;
   };
 
   const startTurn = (profile: PlayerProfile) => {
@@ -80,11 +96,10 @@ const GameContainer: React.FC = () => {
     }
 
     if (playerProfile) {
-      saveLeaderboard({
+      void saveLeaderboard({
         ...playerProfile,
         score: turnBest.current,
         distance: turnBest.distance,
-        date: new Date().toISOString(),
       });
     }
     setGameState('start');
@@ -116,6 +131,7 @@ const GameContainer: React.FC = () => {
         turnBest={turnBest}
         leaderboard={leaderboard}
         countdown={countdown}
+        onDeleteScore={deleteLeaderboardScore}
       />
     </div>
   );
