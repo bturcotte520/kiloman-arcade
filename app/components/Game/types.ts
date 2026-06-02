@@ -39,7 +39,23 @@ export interface MonsterState {
   speed: number;
 }
 
-export type GameStatus = 'start' | 'playing' | 'won' | 'lost';
+export type GameStatus = 'start' | 'countdown' | 'playing' | 'won' | 'lost';
+
+export interface PlayerProfile {
+  initials: string;
+}
+
+export interface LeaderboardEntry extends PlayerProfile {
+  score: number;
+  distance: number;
+  date: string;
+}
+
+export interface ScoreState {
+  current: number;
+  best: number;
+  distance: number;
+}
 
 export interface CompletionData {
   completionTime: number; // Time in seconds

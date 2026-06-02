@@ -1,16 +1,40 @@
-import React, { useRef, useEffect } from 'react';
-import { GameStatus, PlayerState, GameConfig, LevelEntity, MonsterState } from './types';
-import { LEVEL_1 } from './levelData';
+import React, { useCallback, useRef, useEffect } from 'react';
+import { GameStatus, PlayerState, GameConfig, LevelEntity, MonsterState, ScoreState } from './types';
 
 const INPUT_EVENT_NAME = 'kiloman:input';
+const MENU_EVENT_NAME = 'kiloman:menu-action';
+const MENU_NAV_EVENT_NAME = 'kiloman:menu-nav';
+const CHUNK_WIDTH = 900;
+const RENDER_BUFFER = 1400;
+const MONSTER_POINTS = 500;
+const GROUND_Y = 550;
+const PLATFORM_HEIGHT = 22;
+const MAX_REACHABLE_GAP = 120;
+const MAX_REACHABLE_CLIMB = 55;
+const PLAYER_MAX_SPEED = 8.0;
+const AUTOSCROLL_START_SPEED = 0.9;
+const AUTOSCROLL_MAX_SPEED = PLAYER_MAX_SPEED * 0.9;
+const WALL_PADDING = 18;
+const MONSTER_PLATFORM_WIDTH_BONUS = 35;
+
+const seededRandom = (seed: number) => {
+  const value = Math.sin(seed * 12.9898) * 43758.5453;
+  return value - Math.floor(value);
+};
+
+const range = (seed: number, min: number, max: number) => min + seededRandom(seed) * (max - min);
+
+const difficultyForChunk = (chunk: number) => Math.min(1, chunk / 18);
+
+const enemySpeedForX = (x: number) => Math.min(6.5, 0.75 + x / 3200);
 
 interface GameCanvasProps {
   gameState: GameStatus;
   setGameState: (status: GameStatus) => void;
-  jumpModifier: number;
+  onScoreChange: (score: ScoreState) => void;
 }
 
-const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, jumpModifier }) => {
+const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScoreChange }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const requestRef = useRef<number>(0);
   const frameCountRef = useRef<number>(0);
@@ -36,9 +60,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, jumpMo
     gravity: 0.6,
     friction: 0.85,
     moveSpeed: 0.8,
-    maxSpeed: 8.0,
+    maxSpeed: PLAYER_MAX_SPEED,
     baseJumpForce: -14,
-    levelWidth: 7000, // Updated to match new level length
+    levelWidth: CHUNK_WIDTH,
   };
 
   // Mutable Game State
@@ -55,9 +79,117 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, jumpMo
   });
 
   const cameraRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const scrollXRef = useRef<number>(0);
   const monstersRef = useRef<MonsterState[]>([]);
+  const entitiesRef = useRef<LevelEntity[]>([]);
+  const generatedChunksRef = useRef<Set<number>>(new Set());
+  const scoreRef = useRef<ScoreState>({ current: 0, best: 0, distance: 0 });
+  const bonusScoreRef = useRef<number>(0);
   const keysRef = useRef<{ [key: string]: boolean }>({});
   const logoRef = useRef<HTMLImageElement | null>(null);
+
+  const publishScore = useCallback((score: ScoreState) => {
+    scoreRef.current = score;
+    onScoreChange(score);
+  }, [onScoreChange]);
+
+  const appendChunk = useCallback((chunk: number) => {
+    if (generatedChunksRef.current.has(chunk)) return;
+
+    const x0 = chunk * CHUNK_WIDTH;
+    const difficulty = difficultyForChunk(chunk);
+    const entities: LevelEntity[] = [];
+
+    if (chunk === 0) {
+      entities.push(
+        { id: 'start-0', x: 0, y: GROUND_Y - 40, w: 260, h: PLATFORM_HEIGHT, type: 'platform' },
+        { id: 'step-0-0', x: 330, y: 455, w: 170, h: PLATFORM_HEIGHT, type: 'platform' },
+        { id: 'step-0-1', x: 580, y: 420, w: 170, h: PLATFORM_HEIGHT, type: 'platform' },
+        { id: 'step-0-2', x: 825, y: 440, w: 150, h: PLATFORM_HEIGHT, type: 'platform' }
+      );
+      entitiesRef.current.push(...entities);
+      generatedChunksRef.current.add(chunk);
+      return;
+    }
+
+    const platformCount = 5 + Math.floor(range(chunk * 19, 0, 2 + difficulty * 2));
+    let lastRight = x0 - 20;
+    let lastY = GROUND_Y - 80 + range(chunk * 17, -25, 25);
+
+    const chunkStart = Math.max(x0 + 45, lastRight + range(chunk * 13, 55, 105));
+    const firstWidth = range(chunk * 31, 160 - difficulty * 20, 210 - difficulty * 20);
+    const firstY = Math.max(330, Math.min(GROUND_Y - 70, lastY + range(chunk * 17, -35, 35)));
+    entities.push({ id: `platform-${chunk}-start`, x: chunkStart, y: firstY, w: firstWidth, h: PLATFORM_HEIGHT, type: 'platform' });
+    lastRight = chunkStart + firstWidth;
+    lastY = firstY;
+
+    for (let i = 0; i < platformCount; i++) {
+      const gap = range(chunk * 23 + i, 50 + difficulty * 10, MAX_REACHABLE_GAP - difficulty * 12);
+      const px = lastRight + gap;
+      if (px > x0 + CHUNK_WIDTH - 130) break;
+
+      const verticalDelta = range(chunk * 29 + i, -55 - difficulty * 10, MAX_REACHABLE_CLIMB - difficulty * 10);
+      const py = Math.max(315, Math.min(GROUND_Y - 65, lastY - verticalDelta));
+      const pw = range(chunk * 31 + i, 135 - difficulty * 18, 200 - difficulty * 35);
+      const platformWidth = Math.max(112, pw);
+      entities.push({ id: `platform-${chunk}-${i}`, x: px, y: py, w: platformWidth, h: PLATFORM_HEIGHT, type: 'platform' });
+      lastRight = px + platformWidth;
+      lastY = py;
+    }
+
+    while (lastRight < x0 + CHUNK_WIDTH - 125) {
+      const bridgeX = lastRight + 65;
+      const bridgeY = Math.max(320, Math.min(GROUND_Y - 75, lastY + range(chunk * 53 + entities.length, -35, MAX_REACHABLE_CLIMB)));
+      entities.push({
+        id: `bridge-${chunk}-${entities.length}`,
+        x: bridgeX,
+        y: bridgeY,
+        w: 170,
+        h: PLATFORM_HEIGHT,
+        type: 'platform',
+      });
+      lastRight = bridgeX + 170;
+      lastY = bridgeY;
+    }
+
+    const platforms = entities.filter(e => e.type === 'platform' && e.w >= 135);
+    const monsterCount = chunk < 2 ? 0 : Math.min(platforms.length, 1 + Math.floor(range(chunk * 41, 0, difficulty * 2.2)));
+    for (let i = 0; i < monsterCount; i++) {
+      const platform = platforms[Math.floor(range(chunk * 43 + i, 0, platforms.length))];
+      platform.w += MONSTER_PLATFORM_WIDTH_BONUS;
+      const patrolStart = platform.x + 8;
+      const patrolEnd = platform.x + platform.w - 48;
+      if (patrolEnd <= patrolStart) continue;
+
+      const speed = enemySpeedForX(patrolStart);
+      monstersRef.current.push({
+        id: `monster-${chunk}-${i}`,
+        x: patrolStart,
+        y: platform.y - 40,
+        w: 40,
+        h: 40,
+        vx: speed,
+        patrolStart,
+        patrolEnd,
+        speed,
+      });
+    }
+
+    entitiesRef.current.push(...entities);
+    generatedChunksRef.current.add(chunk);
+  }, []);
+
+  const maintainEndlessLevel = (playerX: number) => {
+    const currentChunk = Math.floor(playerX / CHUNK_WIDTH);
+    appendChunk(currentChunk);
+    appendChunk(currentChunk + 1);
+    appendChunk(currentChunk + 2);
+    appendChunk(currentChunk + 3);
+
+    const cutoff = Math.min(playerX, scrollXRef.current) - RENDER_BUFFER;
+    entitiesRef.current = entitiesRef.current.filter(e => e.x + e.w > cutoff);
+    monstersRef.current = monstersRef.current.filter(m => m.x + m.w > cutoff);
+  };
 
   // Load Logo
   useEffect(() => {
@@ -96,7 +228,64 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, jumpMo
 
     window.addEventListener(INPUT_EVENT_NAME, handleVirtualInput as EventListener);
 
+    let animationFrameId = 0;
+    let gamepadLeft = false;
+    let gamepadRight = false;
+    let gamepadJump = false;
+    let gamepadUp = false;
+    let gamepadDown = false;
+
+    const setGamepadKey = (code: 'ArrowLeft' | 'ArrowRight' | 'Space', pressed: boolean) => {
+      keysRef.current[code] = pressed;
+    };
+
+    const pollGamepads = () => {
+      const gamepads = navigator.getGamepads?.() ?? [];
+      const gamepad = Array.from(gamepads).find((pad): pad is Gamepad => Boolean(pad));
+
+      const stickX = gamepad?.axes[0] ?? 0;
+      const stickY = gamepad?.axes[1] ?? 0;
+      const left = Boolean(gamepad?.buttons[14]?.pressed) || stickX < -0.35;
+      const right = Boolean(gamepad?.buttons[15]?.pressed) || stickX > 0.35;
+      const up = Boolean(gamepad?.buttons[12]?.pressed) || stickY < -0.35;
+      const down = Boolean(gamepad?.buttons[13]?.pressed) || stickY > 0.35;
+      const jump = Boolean(gamepad?.buttons[0]?.pressed);
+
+      if (left !== gamepadLeft) {
+        gamepadLeft = left;
+        setGamepadKey('ArrowLeft', left);
+      }
+      if (right !== gamepadRight) {
+        gamepadRight = right;
+        setGamepadKey('ArrowRight', right);
+        if (right) window.dispatchEvent(new CustomEvent(MENU_NAV_EVENT_NAME, { detail: { direction: 'right' } }));
+      }
+      if (up !== gamepadUp) {
+        gamepadUp = up;
+        if (up) window.dispatchEvent(new CustomEvent(MENU_NAV_EVENT_NAME, { detail: { direction: 'up' } }));
+      }
+      if (down !== gamepadDown) {
+        gamepadDown = down;
+        if (down) window.dispatchEvent(new CustomEvent(MENU_NAV_EVENT_NAME, { detail: { direction: 'down' } }));
+      }
+      if (jump !== gamepadJump) {
+        gamepadJump = jump;
+        setGamepadKey('Space', jump);
+        if (jump) {
+          window.dispatchEvent(new CustomEvent(MENU_EVENT_NAME));
+        }
+      }
+
+      animationFrameId = window.requestAnimationFrame(pollGamepads);
+    };
+
+    pollGamepads();
+
     return () => {
+      window.cancelAnimationFrame(animationFrameId);
+      setGamepadKey('ArrowLeft', false);
+      setGamepadKey('ArrowRight', false);
+      setGamepadKey('Space', false);
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
       window.removeEventListener(INPUT_EVENT_NAME, handleVirtualInput as EventListener);
@@ -106,10 +295,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, jumpMo
   // Reset Game State
   useEffect(() => {
     if (gameState === 'playing') {
-      const startPos = LEVEL_1.find(e => e.type === 'start');
       playerRef.current = {
-        x: startPos ? startPos.x : 50,
-        y: startPos ? startPos.y : 350,
+        x: 50,
+        y: 350,
         vx: 0,
         vy: 0,
         width: 30,
@@ -119,23 +307,17 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, jumpMo
         frame: 0,
       };
       cameraRef.current = { x: 0, y: 0 };
-      
-      // Initialize Monsters
-      monstersRef.current = LEVEL_1
-        .filter(e => e.type === 'monster')
-        .map(m => ({
-          id: m.id,
-          x: m.x,
-          y: m.y,
-          w: m.w,
-          h: m.h,
-          vx: m.speed || 2,
-          patrolStart: m.patrolStart || m.x - 100,
-          patrolEnd: m.patrolEnd || m.x + 100,
-          speed: m.speed || 2,
-        }));
+      scrollXRef.current = 0;
+      entitiesRef.current = [];
+      monstersRef.current = [];
+      generatedChunksRef.current = new Set();
+      bonusScoreRef.current = 0;
+      publishScore({ current: 0, best: scoreRef.current.best, distance: 0 });
+      appendChunk(0);
+      appendChunk(1);
+      appendChunk(2);
     }
-  }, [gameState]);
+  }, [appendChunk, gameState, publishScore]);
 
   // --- RENDERING HELPERS ---
 
@@ -210,22 +392,31 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, jumpMo
   const drawPlatform = (ctx: CanvasRenderingContext2D, entity: LevelEntity, cameraX: number, cameraY: number) => {
     const x = entity.x - cameraX;
     const y = entity.y - cameraY;
+    const isGround = entity.h > 100;
+    const visualHeight = Math.max(entity.h, ctx.canvas.height - y + 80);
     
     // 3D Effect: Top Face
     ctx.fillStyle = '#fbbf24'; // Amber 400 (Light Top)
     ctx.fillRect(x, y, entity.w, 5);
 
     // Front Face
-    const gradient = ctx.createLinearGradient(x, y, x, y + entity.h);
-    gradient.addColorStop(0, '#d97706'); // Amber 600
-    gradient.addColorStop(1, '#92400e'); // Amber 800
+    const gradient = ctx.createLinearGradient(x, y, x, y + visualHeight);
+    gradient.addColorStop(0, isGround ? '#854d0e' : '#d97706');
+    gradient.addColorStop(1, isGround ? '#292524' : '#92400e');
     ctx.fillStyle = gradient;
-    ctx.fillRect(x, y + 5, entity.w, entity.h - 5);
+    ctx.fillRect(x, y + 5, entity.w, visualHeight - 5);
+
+    if (isGround || visualHeight > entity.h) {
+      ctx.fillStyle = 'rgba(120, 53, 15, 0.45)';
+      for (let dirtY = y + 45; dirtY < y + Math.min(visualHeight, ctx.canvas.height - y + 120); dirtY += 55) {
+        ctx.fillRect(x + 12, dirtY, entity.w - 24, 3);
+      }
+    }
 
     // Border/Detail
     ctx.strokeStyle = '#78350f';
     ctx.lineWidth = 2;
-    ctx.strokeRect(x, y, entity.w, entity.h);
+    ctx.strokeRect(x, y, entity.w, visualHeight);
   };
 
   const drawHumanoid = (ctx: CanvasRenderingContext2D, p: PlayerState, cameraX: number, cameraY: number) => {
@@ -329,13 +520,19 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, jumpMo
 
     // Jumping
     if (keys['Space'] && player.isGrounded) {
-      player.vy = CONFIG.baseJumpForce * jumpModifier;
+      player.vy = CONFIG.baseJumpForce;
       player.isGrounded = false;
     }
 
     // Apply Velocity
     player.x += player.vx;
     player.y += player.vy;
+
+    maintainEndlessLevel(player.x);
+
+    const autoScrollProgress = Math.min(1, player.x / 18000);
+    const autoScrollSpeed = AUTOSCROLL_START_SPEED + (AUTOSCROLL_MAX_SPEED - AUTOSCROLL_START_SPEED) * autoScrollProgress;
+    scrollXRef.current += autoScrollSpeed;
 
     // --- MONSTER LOGIC ---
     monsters.forEach(m => {
@@ -356,14 +553,18 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, jumpMo
     
     // World Boundaries
     if (player.x < 0) { player.x = 0; player.vx = 0; }
-    if (player.x > CONFIG.levelWidth) { player.x = CONFIG.levelWidth; player.vx = 0; }
+    const wallX = scrollXRef.current + WALL_PADDING;
+    if (player.x < wallX) {
+      player.x = wallX;
+      if (player.vx < autoScrollSpeed) player.vx = autoScrollSpeed;
+    }
     if (player.y > 800) {
       setGameState('lost');
       return;
     }
 
     // Entity Collision
-    for (const entity of LEVEL_1) {
+    for (const entity of entitiesRef.current) {
       // Skip monster entities in static check (handled separately)
       if (entity.type === 'monster') continue;
 
@@ -378,11 +579,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, jumpMo
           return;
         }
         
-        if (entity.type === 'goal') {
-          setGameState('won');
-          return;
-        }
-
         if (entity.type === 'platform') {
           const overlapX = (player.width + entity.w) / 2 - Math.abs((player.x + player.width / 2) - (entity.x + entity.w / 2));
           const overlapY = (player.height + entity.h) / 2 - Math.abs((player.y + player.height / 2) - (entity.y + entity.h / 2));
@@ -406,27 +602,38 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, jumpMo
     }
 
     // Monster Collision (Player vs Monster)
-    for (const m of monsters) {
+    for (let i = monsters.length - 1; i >= 0; i--) {
+      const m = monsters[i];
       if (
         player.x < m.x + m.w &&
         player.x + player.width > m.x &&
         player.y < m.y + m.h &&
         player.y + player.height > m.y
       ) {
+        const playerWasFalling = player.vy > 0 && player.y + player.height - player.vy <= m.y + 10;
+        if (playerWasFalling) {
+          monsters.splice(i, 1);
+          bonusScoreRef.current += MONSTER_POINTS;
+          player.vy = CONFIG.baseJumpForce * 0.55;
+          continue;
+        }
+
         setGameState('lost');
         return;
       }
     }
 
+    const distance = Math.max(0, Math.floor(player.x / 10));
+    const current = distance + bonusScoreRef.current;
+    const best = Math.max(scoreRef.current.best, current);
+    if (current !== scoreRef.current.current || best !== scoreRef.current.best) {
+      publishScore({ current, best, distance });
+    }
+
     // --- CAMERA UPDATE ---
     const canvas = canvasRef.current;
     if (canvas) {
-      // Center camera on player
-      let targetX = player.x - canvas.width / 2 + player.width / 2;
-      
-      // Clamp Camera X
-      if (targetX < 0) targetX = 0;
-      if (targetX > CONFIG.levelWidth - canvas.width) targetX = CONFIG.levelWidth - canvas.width;
+      const targetX = scrollXRef.current;
       
       // Camera Y Logic (Keep floor near bottom)
       // We want the player to be roughly at 75% of the screen height when on the ground.
@@ -474,7 +681,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, jumpMo
     drawBackground(ctx, cameraX, cameraY);
 
     // Draw Level Entities
-    LEVEL_1.forEach(entity => {
+    entitiesRef.current.forEach(entity => {
       if (entity.type === 'start' || entity.type === 'monster') return;
       
       if (entity.type === 'platform') {
@@ -511,6 +718,18 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, jumpMo
 
     // Draw Player
     drawHumanoid(ctx, playerRef.current, cameraX, cameraY);
+
+    const wallScreenX = scrollXRef.current + WALL_PADDING - cameraX;
+    ctx.save();
+    ctx.fillStyle = 'rgba(239, 68, 68, 0.18)';
+    ctx.fillRect(wallScreenX - 8, 0, 16, ctx.canvas.height);
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(wallScreenX, 0);
+    ctx.lineTo(wallScreenX, ctx.canvas.height);
+    ctx.stroke();
+    ctx.restore();
   };
 
   const loop = () => {
