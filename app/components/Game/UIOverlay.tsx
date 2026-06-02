@@ -188,71 +188,81 @@ const UIOverlay: React.FC<UIOverlayProps> = ({
 
       {gameState === 'start' && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/95 pointer-events-auto overflow-y-auto py-8">
-          <div className="grid lg:grid-cols-[minmax(0,1fr)_380px] gap-6 max-w-6xl w-full mx-4">
-            <div className="arcade-panel arcade-menu p-8 text-center">
-              <h1 className="arcade-title text-7xl md:text-8xl text-yellow-300 mb-3">KILO MAN</h1>
-              <p className="arcade-copy text-2xl mb-8">ENTER 2-5 INITIALS</p>
-
-              <div className="flex justify-center gap-4 md:gap-7 mb-8" aria-label="Initial selector">
-                {initials.map((letter, index) => (
-                  <button
-                    key={index}
-                    type="button"
-                    onClick={() => setSelectedInitial(index)}
-                    className={`arcade-initial ${selectedInitial === index ? 'arcade-initial--active' : ''}`}
-                    aria-label={`Initial ${index + 1}`}
-                  >
-                    {letter === ' ' ? '_' : letter}
-                  </button>
-                ))}
-              </div>
-
-              <div className="arcade-instructions mb-8">
-                <p>D-PAD LEFT / RIGHT: PICK SLOT</p>
-                <p>D-PAD UP / DOWN: CHANGE LETTER</p>
-                <p>BUTTON: START 3-LIFE TURN</p>
-              </div>
-
-              <button onClick={startTurn} disabled={!canStart} className="arcade-button text-3xl disabled:opacity-50 disabled:translate-y-0 disabled:shadow-none">
-                START GAME
-              </button>
+          <div className="max-w-6xl w-full mx-4">
+            <div className="vegas-title-wrap mb-7 text-center">
+              <h1 className="vegas-title-main">KILO MAN</h1>
+              <div className="vegas-title-script">in Vegas</div>
             </div>
 
-            <div className="arcade-panel p-6 text-yellow-300">
-              <h2 className="arcade-title text-4xl mb-5 text-center">TOP SCORES</h2>
-              <div className="mb-5 flex flex-col gap-3">
-                <button type="button" onClick={() => setAdminMode((value) => !value)} className="arcade-admin-button">
-                  {adminMode ? 'CLOSE ADMIN' : 'ADMIN'}
-                </button>
-                {adminMode && (
-                  <input
-                    value={adminSecret}
-                    onChange={(event) => setAdminSecret(event.target.value)}
-                    type="password"
-                    placeholder="ADMIN CODE"
-                    className="arcade-admin-input"
-                  />
-                )}
-                {adminError && <p className="arcade-help text-center text-red-300">{adminError}</p>}
+            <div className="grid lg:grid-cols-[minmax(0,1fr)_380px] gap-6">
+              <div className="vegas-bulb-frame">
+                <div className="arcade-panel arcade-menu p-8 text-center h-full">
+                  <p className="arcade-copy text-2xl mb-8">ENTER 2-5 INITIALS</p>
+
+                  <div className="flex justify-center gap-4 md:gap-7 mb-8" aria-label="Initial selector">
+                    {initials.map((letter, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => setSelectedInitial(index)}
+                        className={`arcade-initial ${selectedInitial === index ? 'arcade-initial--active' : ''}`}
+                        aria-label={`Initial ${index + 1}`}
+                      >
+                        {letter === ' ' ? '_' : letter}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="arcade-instructions mb-8">
+                    <p>D-PAD LEFT / RIGHT: PICK SLOT</p>
+                    <p>D-PAD UP / DOWN: CHANGE LETTER</p>
+                    <p>BUTTON: START 3-LIFE TURN</p>
+                  </div>
+
+                  <button onClick={startTurn} disabled={!canStart} className="arcade-button text-3xl disabled:opacity-50 disabled:translate-y-0 disabled:shadow-none">
+                    START GAME
+                  </button>
+                </div>
               </div>
-              {leaderboard.length === 0 ? (
-                <p className="arcade-copy text-center">NO SCORES YET</p>
-              ) : (
-                <ol className="space-y-3">
-                  {leaderboard.map((entry, index) => (
-                    <li key={`${entry.initials}-${entry.date}`} className="arcade-leader-row">
-                      <span>{String(index + 1).padStart(2, '0')}</span>
-                      <span>{entry.initials}</span>
-                      <span>{entry.score.toLocaleString()}</span>
-                      {adminMode && (
-                        <button type="button" onClick={() => void deleteScore(entry.id)} className="arcade-delete-button">
-                          DEL
-                        </button>
-                      )}
-                    </li>
-                  ))}
-                </ol>
-              )}
+
+              <div className="vegas-bulb-frame">
+                <div className="arcade-panel p-6 text-yellow-300 h-full">
+                  <h2 className="arcade-title text-4xl mb-5 text-center">TOP SCORES</h2>
+                  <div className="mb-5 flex flex-col gap-3">
+                    <button type="button" onClick={() => setAdminMode((value) => !value)} className="arcade-admin-button">
+                      {adminMode ? 'CLOSE ADMIN' : 'ADMIN'}
+                    </button>
+                    {adminMode && (
+                      <input
+                        value={adminSecret}
+                        onChange={(event) => setAdminSecret(event.target.value)}
+                        type="password"
+                        placeholder="ADMIN CODE"
+                        className="arcade-admin-input"
+                      />
+                    )}
+                    {adminError && <p className="arcade-help text-center text-red-300">{adminError}</p>}
+                  </div>
+                  {leaderboard.length === 0 ? (
+                    <p className="arcade-copy text-center">NO SCORES YET</p>
+                  ) : (
+                    <ol className="space-y-3">
+                      {leaderboard.map((entry, index) => (
+                        <li key={`${entry.initials}-${entry.date}`} className="arcade-leader-row">
+                          <span>{String(index + 1).padStart(2, '0')}</span>
+                          <span>{entry.initials}</span>
+                          <span>{entry.score.toLocaleString()}</span>
+                          {adminMode && (
+                            <button type="button" onClick={() => void deleteScore(entry.id)} className="arcade-delete-button">
+                              DEL
+                            </button>
+                          )}
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
