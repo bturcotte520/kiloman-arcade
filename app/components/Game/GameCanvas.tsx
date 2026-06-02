@@ -87,6 +87,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
   const bonusScoreRef = useRef<number>(0);
   const keysRef = useRef<{ [key: string]: boolean }>({});
   const logoRef = useRef<HTMLImageElement | null>(null);
+  const gameStateRef = useRef<GameStatus>(gameState);
+  const setGameStateRef = useRef(setGameState);
+  const lastScorePublishFrameRef = useRef<number>(0);
+  const updateRef = useRef<() => void>(() => {});
+  const drawRef = useRef<(ctx: CanvasRenderingContext2D) => void>(() => {});
+
+  useEffect(() => {
+    gameStateRef.current = gameState;
+    setGameStateRef.current = setGameState;
+  }, [gameState, setGameState]);
 
   const publishScore = useCallback((score: ScoreState) => {
     scoreRef.current = score;
@@ -396,16 +406,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
     const y = entity.y - cameraY;
     const isGround = entity.h > 100;
     const visualHeight = Math.max(entity.h, ctx.canvas.height - y + 80);
+    if (x + entity.w < -80 || x > ctx.canvas.width + 80 || y > ctx.canvas.height + 80) return;
     
     // 3D Effect: Top Face
     ctx.fillStyle = '#fbbf24'; // Amber 400 (Light Top)
     ctx.fillRect(x, y, entity.w, 5);
 
     // Front Face
-    const gradient = ctx.createLinearGradient(x, y, x, y + visualHeight);
-    gradient.addColorStop(0, isGround ? '#854d0e' : '#d97706');
-    gradient.addColorStop(1, isGround ? '#292524' : '#92400e');
-    ctx.fillStyle = gradient;
+    ctx.fillStyle = isGround ? '#854d0e' : '#b45309';
     ctx.fillRect(x, y + 5, entity.w, visualHeight - 5);
 
     if (isGround || visualHeight > entity.h) {
@@ -492,7 +500,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
   // --- GAME LOOP ---
 
   const update = () => {
-    if (gameState !== 'playing') return;
+    if (gameStateRef.current !== 'playing') return;
 
     const player = playerRef.current;
     const keys = keysRef.current;
@@ -561,7 +569,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
       if (player.vx < autoScrollSpeed) player.vx = autoScrollSpeed;
     }
     if (player.y > 800) {
-      setGameState('lost');
+      setGameStateRef.current('lost');
       return;
     }
 
@@ -577,7 +585,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
         player.y + player.height > entity.y
       ) {
         if (entity.type === 'hazard') {
-          setGameState('lost');
+          setGameStateRef.current('lost');
           return;
         }
         
@@ -620,7 +628,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
           continue;
         }
 
-        setGameState('lost');
+        setGameStateRef.current('lost');
         return;
       }
     }
@@ -628,7 +636,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
     const distance = Math.max(0, Math.floor(player.x / 10));
     const current = distance + bonusScoreRef.current;
     const best = Math.max(scoreRef.current.best, current);
-    if (current !== scoreRef.current.current || best !== scoreRef.current.best) {
+    if (
+      (current !== scoreRef.current.current || best !== scoreRef.current.best) &&
+      frameCountRef.current - lastScorePublishFrameRef.current >= 10
+    ) {
+      lastScorePublishFrameRef.current = frameCountRef.current;
       publishScore({ current, best, distance });
     }
 
@@ -734,24 +746,27 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
     ctx.restore();
   };
 
-  const loop = () => {
-    update();
+  const loop = useCallback(() => {
+    updateRef.current();
     
     const canvas = canvasRef.current;
     if (canvas) {
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        draw(ctx);
+        drawRef.current(ctx);
       }
     }
     
     requestRef.current = requestAnimationFrame(loop);
-  };
+  }, []);
+
+  updateRef.current = update;
+  drawRef.current = draw;
 
   useEffect(() => {
     requestRef.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(requestRef.current);
-  });
+  }, [loop]);
 
   return (
     <canvas
