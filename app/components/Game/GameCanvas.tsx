@@ -633,7 +633,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
           return;
         }
         
-        if (entity.type === 'platform') {
+        if (entity.type === 'platform' || entity.type === 'start') {
           const previousX = player.x - player.vx;
           const previousY = player.y - player.vy;
           const previousBottom = previousY + player.height;
