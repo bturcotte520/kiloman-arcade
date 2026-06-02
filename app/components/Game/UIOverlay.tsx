@@ -226,7 +226,7 @@ const UIOverlay: React.FC<UIOverlayProps> = ({
 
             <div className="grid lg:grid-cols-[minmax(0,1fr)_380px] gap-6">
               <div className="vegas-bulb-frame">
-                <VegasBulbRing />
+                <VegasBulbRing startOffset={VEGAS_BULB_COUNT / 4} />
                 <div className="arcade-panel arcade-menu p-8 text-center h-full">
                   <p className="arcade-copy text-2xl mb-8">ENTER 2-5 INITIALS</p>
 
