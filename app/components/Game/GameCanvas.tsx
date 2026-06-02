@@ -12,10 +12,11 @@ const PLATFORM_HEIGHT = 22;
 const MAX_REACHABLE_GAP = 120;
 const MAX_REACHABLE_CLIMB = 55;
 const PLAYER_MAX_SPEED = 8.0;
-const AUTOSCROLL_START_SPEED = 0.9;
+const AUTOSCROLL_START_SPEED = 0.675;
 const AUTOSCROLL_MAX_SPEED = PLAYER_MAX_SPEED * 0.9;
 const WALL_PADDING = 18;
 const MONSTER_PLATFORM_WIDTH_BONUS = 35;
+const FALL_DEATH_SCREEN_MARGIN = 220;
 
 const seededRandom = (seed: number) => {
   const value = Math.sin(seed * 12.9898) * 43758.5453;
@@ -568,7 +569,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
       player.x = wallX;
       if (player.vx < autoScrollSpeed) player.vx = autoScrollSpeed;
     }
-    if (player.y > 800) {
+    const canvas = canvasRef.current;
+    const fallDeathY = cameraRef.current.y + (canvas?.height ?? dimensions.height) + FALL_DEATH_SCREEN_MARGIN;
+    if (player.y > fallDeathY) {
       setGameStateRef.current('lost');
       return;
     }
@@ -645,7 +648,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
     }
 
     // --- CAMERA UPDATE ---
-    const canvas = canvasRef.current;
     if (canvas) {
       const targetX = scrollXRef.current;
       
