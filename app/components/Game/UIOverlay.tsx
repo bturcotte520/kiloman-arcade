@@ -32,13 +32,16 @@ function nextLetter(letter: string, delta: number) {
 
 interface VegasBulbRingProps {
   reverse?: boolean;
+  startOffset?: number;
 }
 
-const VegasBulbRing: React.FC<VegasBulbRingProps> = ({ reverse = false }) => (
+const VegasBulbRing: React.FC<VegasBulbRingProps> = ({ reverse = false, startOffset = 0 }) => (
   <div className="vegas-bulb-ring" aria-hidden="true">
     {Array.from({ length: VEGAS_BULB_COUNT }, (_, index) => {
       const progress = index / VEGAS_BULB_COUNT;
-      const chaseIndex = reverse ? VEGAS_BULB_COUNT - index : index;
+      const chaseIndex = reverse
+        ? (VEGAS_BULB_COUNT - index + startOffset) % VEGAS_BULB_COUNT
+        : (index + startOffset) % VEGAS_BULB_COUNT;
       let style: React.CSSProperties;
 
       if (progress < 0.25) {
@@ -254,7 +257,7 @@ const UIOverlay: React.FC<UIOverlayProps> = ({
               </div>
 
               <div className="vegas-bulb-frame">
-                <VegasBulbRing reverse />
+                <VegasBulbRing reverse startOffset={VEGAS_BULB_COUNT / 2} />
                 <div className="arcade-panel p-6 text-yellow-300 h-full">
                   <h2 className="arcade-title text-4xl mb-5 text-center">TOP SCORES</h2>
                   <div className="mb-5 flex flex-col gap-3">
