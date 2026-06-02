@@ -21,6 +21,7 @@ const START_PLATFORM_X = 40;
 const START_PLATFORM_Y = GROUND_Y - 40;
 const START_PLATFORM_WIDTH = 520;
 const START_CHUNK_PLATFORM_SHIFT = 430;
+const VEGAS_SCENE_WIDTH = 1400;
 
 const seededRandom = (seed: number) => {
   const value = Math.sin(seed * 12.9898) * 43758.5453;
@@ -32,6 +33,8 @@ const range = (seed: number, min: number, max: number) => min + seededRandom(see
 const difficultyForChunk = (chunk: number) => Math.min(1, chunk / 18);
 
 const enemySpeedForX = (x: number) => Math.min(6.5, 0.75 + x / 3200);
+
+const wrapSceneX = (x: number, width: number) => ((x % width) + width) % width;
 
 interface GameCanvasProps {
   gameState: GameStatus;
@@ -381,6 +384,93 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
       ctx.fillRect(finalX, y, 2, 2);
     }
     ctx.globalAlpha = 1.0;
+
+    const drawVegasStrip = (parallax: number, baseY: number, alpha: number) => {
+      const offset = wrapSceneX(cameraX * parallax, VEGAS_SCENE_WIDTH);
+      ctx.save();
+      ctx.globalAlpha = alpha;
+
+      for (let repeat = -1; repeat <= 1; repeat++) {
+        const originX = repeat * VEGAS_SCENE_WIDTH - offset;
+
+        // Hotel towers
+        ctx.fillStyle = '#111047';
+        ctx.fillRect(originX + 80, baseY - 155, 120, 155);
+        ctx.fillRect(originX + 260, baseY - 210, 92, 210);
+        ctx.fillRect(originX + 590, baseY - 180, 150, 180);
+        ctx.fillRect(originX + 1040, baseY - 235, 110, 235);
+
+        ctx.fillStyle = 'rgba(250, 204, 21, 0.55)';
+        for (let i = 0; i < 9; i++) {
+          ctx.fillRect(originX + 100 + (i % 3) * 30, baseY - 135 + Math.floor(i / 3) * 34, 8, 14);
+          ctx.fillRect(originX + 280 + (i % 2) * 34, baseY - 185 + Math.floor(i / 2) * 32, 8, 12);
+          ctx.fillRect(originX + 620 + (i % 4) * 28, baseY - 150 + Math.floor(i / 4) * 42, 7, 12);
+        }
+
+        // Welcome sign
+        ctx.fillStyle = '#fef3c7';
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(originX + 430, baseY - 150);
+        ctx.lineTo(originX + 520, baseY - 125);
+        ctx.lineTo(originX + 520, baseY - 65);
+        ctx.lineTo(originX + 430, baseY - 40);
+        ctx.lineTo(originX + 340, baseY - 65);
+        ctx.lineTo(originX + 340, baseY - 125);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#7f1d1d';
+        ctx.font = 'bold 15px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('WELCOME', originX + 430, baseY - 112);
+        ctx.fillText('TO KILO', originX + 430, baseY - 90);
+        ctx.fillText('VEGAS', originX + 430, baseY - 68);
+
+        // Casino neon signs
+        ctx.fillStyle = '#ec4899';
+        ctx.shadowColor = '#ec4899';
+        ctx.shadowBlur = 16;
+        ctx.fillRect(originX + 790, baseY - 122, 170, 72);
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(originX + 800, baseY - 112, 150, 52);
+        ctx.fillStyle = '#facc15';
+        ctx.font = 'bold 24px monospace';
+        ctx.fillText('SLOTS', originX + 875, baseY - 78);
+
+        ctx.shadowColor = '#38bdf8';
+        ctx.shadowBlur = 18;
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.arc(originX + 1240, baseY - 95, 46, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = '#bfdbfe';
+        ctx.font = 'bold 18px monospace';
+        ctx.fillText('777', originX + 1240, baseY - 88);
+        ctx.shadowBlur = 0;
+      }
+
+      // Sky searchlight sweep
+      const sweepX = wrapSceneX(cameraX * 0.08 + frameCountRef.current * 1.2, w + 260) - 130;
+      const beam = ctx.createLinearGradient(sweepX, h, sweepX + 90, 0);
+      beam.addColorStop(0, 'rgba(250, 204, 21, 0)');
+      beam.addColorStop(0.45, 'rgba(250, 204, 21, 0.13)');
+      beam.addColorStop(1, 'rgba(250, 204, 21, 0)');
+      ctx.fillStyle = beam;
+      ctx.beginPath();
+      ctx.moveTo(sweepX - 70, h);
+      ctx.lineTo(sweepX + 18, baseY - 260);
+      ctx.lineTo(sweepX + 118, baseY - 260);
+      ctx.lineTo(sweepX + 210, h);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.restore();
+    };
+
+    drawVegasStrip(0.16, h - 118 - cameraY * 0.05, 0.88);
 
     // Parallax Mountains (Far)
     ctx.fillStyle = '#1e1b4b'; // Dark Indigo
