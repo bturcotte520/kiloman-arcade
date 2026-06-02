@@ -245,15 +245,17 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
 
       const stickX = gamepad?.axes[0] ?? 0;
       const stickY = gamepad?.axes[1] ?? 0;
+      const anyButtonPressed = gamepad?.buttons.some((button) => button.pressed) ?? false;
       const left = Boolean(gamepad?.buttons[14]?.pressed) || stickX < -0.35;
       const right = Boolean(gamepad?.buttons[15]?.pressed) || stickX > 0.35;
       const up = Boolean(gamepad?.buttons[12]?.pressed) || stickY < -0.35;
       const down = Boolean(gamepad?.buttons[13]?.pressed) || stickY > 0.35;
-      const jump = Boolean(gamepad?.buttons[0]?.pressed);
+      const jump = anyButtonPressed;
 
       if (left !== gamepadLeft) {
         gamepadLeft = left;
         setGamepadKey('ArrowLeft', left);
+        if (left) window.dispatchEvent(new CustomEvent(MENU_NAV_EVENT_NAME, { detail: { direction: 'left' } }));
       }
       if (right !== gamepadRight) {
         gamepadRight = right;

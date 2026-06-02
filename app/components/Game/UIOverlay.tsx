@@ -150,7 +150,7 @@ const UIOverlay: React.FC<UIOverlayProps> = ({
 
         <div className="arcade-panel p-5 text-yellow-300 text-right hidden sm:block">
           <p className="arcade-help">MOVE: STICK / D-PAD</p>
-          <p className="arcade-help">JUMP / SELECT: A</p>
+          <p className="arcade-help">JUMP / SELECT: BUTTON</p>
           <p className="arcade-help">KEYBOARD: ARROWS + SPACE</p>
         </div>
       </div>
@@ -210,7 +210,7 @@ const UIOverlay: React.FC<UIOverlayProps> = ({
               <div className="arcade-instructions mb-8">
                 <p>D-PAD LEFT / RIGHT: PICK SLOT</p>
                 <p>D-PAD UP / DOWN: CHANGE LETTER</p>
-                <p>A BUTTON: START 3-LIFE TURN</p>
+                <p>BUTTON: START 3-LIFE TURN</p>
               </div>
 
               <button onClick={startTurn} disabled={!canStart} className="arcade-button text-3xl disabled:opacity-50 disabled:translate-y-0 disabled:shadow-none">
