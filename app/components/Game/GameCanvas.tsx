@@ -117,7 +117,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
 
     if (chunk === 0) {
       entities.push(
-        { id: 'starter-platform', x: START_PLATFORM_X, y: START_PLATFORM_Y, w: START_PLATFORM_WIDTH, h: PLATFORM_HEIGHT, type: 'start' },
+        { id: 'starter-platform', x: START_PLATFORM_X, y: START_PLATFORM_Y, w: START_PLATFORM_WIDTH, h: PLATFORM_HEIGHT, type: 'platform', showStartArrow: true },
         { id: 'start-0', x: 0 + START_CHUNK_PLATFORM_SHIFT, y: GROUND_Y - 40, w: 260, h: PLATFORM_HEIGHT, type: 'platform' },
         { id: 'step-0-0', x: 330 + START_CHUNK_PLATFORM_SHIFT, y: 455, w: 170, h: PLATFORM_HEIGHT, type: 'platform' },
         { id: 'step-0-1', x: 580 + START_CHUNK_PLATFORM_SHIFT, y: 420, w: 170, h: PLATFORM_HEIGHT, type: 'platform' },
@@ -749,9 +749,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
     entitiesRef.current.forEach(entity => {
       if (entity.type === 'monster') return;
       
-      if (entity.type === 'platform' || entity.type === 'start') {
+      if (entity.type === 'platform') {
         drawPlatform(ctx, entity, cameraX, cameraY);
-        if (entity.type === 'start') drawStartArrow(ctx, entity, cameraX, cameraY);
+        if (entity.showStartArrow) drawStartArrow(ctx, entity, cameraX, cameraY);
       } else if (entity.type === 'hazard') {
         ctx.fillStyle = '#ef4444'; // Red
         const x = entity.x - cameraX;

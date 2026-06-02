@@ -30,10 +30,15 @@ function nextLetter(letter: string, delta: number) {
   return INITIAL_CHOICES[(index + delta + INITIAL_CHOICES.length) % INITIAL_CHOICES.length];
 }
 
-const VegasBulbRing = () => (
+interface VegasBulbRingProps {
+  reverse?: boolean;
+}
+
+const VegasBulbRing: React.FC<VegasBulbRingProps> = ({ reverse = false }) => (
   <div className="vegas-bulb-ring" aria-hidden="true">
     {Array.from({ length: VEGAS_BULB_COUNT }, (_, index) => {
       const progress = index / VEGAS_BULB_COUNT;
+      const chaseIndex = reverse ? VEGAS_BULB_COUNT - index : index;
       let style: React.CSSProperties;
 
       if (progress < 0.25) {
@@ -46,7 +51,7 @@ const VegasBulbRing = () => (
         style = { left: '0%', top: `${(1 - (progress - 0.75) * 4) * 100}%` };
       }
 
-      return <span key={index} className="vegas-bulb" style={{ ...style, '--bulb-index': index } as React.CSSProperties} />;
+      return <span key={index} className="vegas-bulb" style={{ ...style, '--bulb-index': chaseIndex } as React.CSSProperties} />;
     })}
   </div>
 );
@@ -249,7 +254,7 @@ const UIOverlay: React.FC<UIOverlayProps> = ({
               </div>
 
               <div className="vegas-bulb-frame">
-                <VegasBulbRing />
+                <VegasBulbRing reverse />
                 <div className="arcade-panel p-6 text-yellow-300 h-full">
                   <h2 className="arcade-title text-4xl mb-5 text-center">TOP SCORES</h2>
                   <div className="mb-5 flex flex-col gap-3">

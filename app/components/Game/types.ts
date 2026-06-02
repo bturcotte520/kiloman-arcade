@@ -9,6 +9,7 @@ export interface LevelEntity {
   type: EntityType;
   // Visual properties
   color?: string;
+  showStartArrow?: boolean;
   // Monster specific properties
   patrolStart?: number;
   patrolEnd?: number;
