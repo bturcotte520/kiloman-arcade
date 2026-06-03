@@ -22,6 +22,9 @@ const START_PLATFORM_Y = GROUND_Y - 40;
 const START_PLATFORM_WIDTH = 520;
 const START_CHUNK_PLATFORM_SHIFT = 430;
 const VEGAS_SCENE_WIDTH = 1400;
+const FIXED_TIMESTEP_MS = 1000 / 60;
+const MAX_FRAME_DELTA_MS = 100;
+const MAX_SIMULATION_STEPS = 5;
 
 const seededRandom = (seed: number) => {
   const value = Math.sin(seed * 12.9898) * 43758.5453;
@@ -100,6 +103,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
   const lastScorePublishFrameRef = useRef<number>(0);
   const updateRef = useRef<() => void>(() => {});
   const drawRef = useRef<(ctx: CanvasRenderingContext2D) => void>(() => {});
+  const lastLoopTimeRef = useRef<number>(0);
+  const accumulatedTimeRef = useRef<number>(0);
 
   useEffect(() => {
     gameStateRef.current = gameState;
@@ -959,8 +964,25 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
     ctx.restore();
   };
 
-  const loop = useCallback(() => {
-    updateRef.current();
+  const loop = useCallback((timestamp: number) => {
+    if (lastLoopTimeRef.current === 0) {
+      lastLoopTimeRef.current = timestamp;
+    }
+
+    const frameDelta = Math.min(timestamp - lastLoopTimeRef.current, MAX_FRAME_DELTA_MS);
+    lastLoopTimeRef.current = timestamp;
+    accumulatedTimeRef.current += frameDelta;
+
+    let steps = 0;
+    while (accumulatedTimeRef.current >= FIXED_TIMESTEP_MS && steps < MAX_SIMULATION_STEPS) {
+      updateRef.current();
+      accumulatedTimeRef.current -= FIXED_TIMESTEP_MS;
+      steps++;
+    }
+
+    if (steps === MAX_SIMULATION_STEPS) {
+      accumulatedTimeRef.current = 0;
+    }
     
     const canvas = canvasRef.current;
     if (canvas) {
@@ -977,6 +999,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
   drawRef.current = draw;
 
   useEffect(() => {
+    lastLoopTimeRef.current = 0;
+    accumulatedTimeRef.current = 0;
     requestRef.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(requestRef.current);
   }, [loop]);
