@@ -22,8 +22,6 @@ const START_PLATFORM_Y = GROUND_Y - 40;
 const START_PLATFORM_WIDTH = 520;
 const START_CHUNK_PLATFORM_SHIFT = 430;
 const VEGAS_SCENE_WIDTH = 1400;
-const MAX_CANVAS_WIDTH = 1440;
-const MAX_CANVAS_HEIGHT = 810;
 
 const seededRandom = (seed: number) => {
   const value = Math.sin(seed * 12.9898) * 43758.5453;
@@ -52,10 +50,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
 
   useEffect(() => {
     const handleResize = () => {
-      const scale = Math.min(1, MAX_CANVAS_WIDTH / window.innerWidth, MAX_CANVAS_HEIGHT / window.innerHeight);
       setDimensions({
-        width: Math.round(window.innerWidth * scale),
-        height: Math.round(window.innerHeight * scale)
+        width: window.innerWidth,
+        height: window.innerHeight
       });
     };
 
@@ -1001,7 +998,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
       ref={canvasRef}
       width={dimensions.width}
       height={dimensions.height}
-      className="block bg-black w-screen h-screen"
+      className="block bg-black"
     />
   );
 };
