@@ -6,7 +6,8 @@ const MENU_EVENT_NAME = 'kiloman:menu-action';
 const MENU_NAV_EVENT_NAME = 'kiloman:menu-nav';
 const CHUNK_WIDTH = 900;
 const RENDER_BUFFER = 1400;
-const MONSTER_POINTS = 500;
+const MONSTER_POINTS = 10;
+const SCORE_POPUP_LIFETIME = 55;
 const GROUND_Y = 550;
 const PLATFORM_HEIGHT = 22;
 const MAX_REACHABLE_GAP = 120;
@@ -40,6 +41,14 @@ interface GameCanvasProps {
   gameState: GameStatus;
   setGameState: (status: GameStatus) => void;
   onScoreChange: (score: ScoreState) => void;
+}
+
+interface ScorePopup {
+  id: number;
+  x: number;
+  y: number;
+  value: number;
+  age: number;
 }
 
 const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScoreChange }) => {
@@ -90,6 +99,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
   const scrollXRef = useRef<number>(0);
   const monstersRef = useRef<MonsterState[]>([]);
   const entitiesRef = useRef<LevelEntity[]>([]);
+  const scorePopupsRef = useRef<ScorePopup[]>([]);
   const generatedChunksRef = useRef<Set<number>>(new Set());
   const scoreRef = useRef<ScoreState>({ current: 0, best: 0, distance: 0 });
   const bonusScoreRef = useRef<number>(0);
@@ -331,6 +341,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
       scrollXRef.current = 0;
       entitiesRef.current = [];
       monstersRef.current = [];
+      scorePopupsRef.current = [];
       generatedChunksRef.current = new Set();
       bonusScoreRef.current = 0;
       publishScore({ current: 0, best: scoreRef.current.best, distance: 0 });
@@ -712,6 +723,27 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
     ctx.fillRect(cx + 3, cy - 5, 5, 5);
   };
 
+  const drawScorePopups = (ctx: CanvasRenderingContext2D, cameraX: number, cameraY: number) => {
+    scorePopupsRef.current.forEach((popup) => {
+      const alpha = 1 - popup.age / SCORE_POPUP_LIFETIME;
+      const text = `+${popup.value}`;
+      const x = popup.x - cameraX;
+      const y = popup.y - cameraY;
+
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, alpha);
+      ctx.fillStyle = '#facc15';
+      ctx.strokeStyle = '#111827';
+      ctx.lineWidth = 4;
+      ctx.font = 'bold 24px monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.strokeText(text, x, y);
+      ctx.fillText(text, x, y);
+      ctx.restore();
+    });
+  };
+
   // --- GAME LOOP ---
 
   const update = () => {
@@ -771,6 +803,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
         m.vx = -Math.abs(m.speed);
       }
     });
+
+    scorePopupsRef.current = scorePopupsRef.current
+      .map((popup) => ({ ...popup, age: popup.age + 1, y: popup.y - 0.8 }))
+      .filter((popup) => popup.age < SCORE_POPUP_LIFETIME);
 
     // --- COLLISION DETECTION ---
     
@@ -847,6 +883,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
       ) {
         const playerWasFalling = player.vy > 0 && player.y + player.height - player.vy <= m.y + 10;
         if (playerWasFalling) {
+          scorePopupsRef.current.push({ id: frameCountRef.current, x: m.x + m.w / 2, y: m.y - 8, value: MONSTER_POINTS, age: 0 });
           monsters.splice(i, 1);
           bonusScoreRef.current += MONSTER_POINTS;
           player.vy = CONFIG.baseJumpForce * 0.55;
@@ -954,6 +991,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
     monstersRef.current.forEach(m => {
       drawMonster(ctx, m, cameraX, cameraY);
     });
+
+    drawScorePopups(ctx, cameraX, cameraY);
 
     // Draw Player
     drawHumanoid(ctx, playerRef.current, cameraX, cameraY);
