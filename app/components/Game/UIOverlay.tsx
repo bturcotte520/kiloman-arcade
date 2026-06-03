@@ -274,13 +274,25 @@ const UIOverlay: React.FC<UIOverlayProps> = ({
                   </div>
 
                   <div className="arcade-instructions mb-8">
-                    <button
-                      type="button"
-                      onClick={() => setControlExplainer((value) => value === 'joystick' ? 'keyboard' : 'joystick')}
-                      className="arcade-control-toggle mb-3"
-                    >
-                      {controlExplainer === 'joystick' ? 'SHOW KEYBOARD' : 'SHOW JOYSTICK'}
-                    </button>
+                    <div className="arcade-control-toggle-row mb-3">
+                      <span>Controls:</span>
+                      <button
+                        type="button"
+                        onClick={() => setControlExplainer('joystick')}
+                        className={`arcade-control-toggle ${controlExplainer === 'joystick' ? 'arcade-control-toggle--active' : ''}`}
+                        aria-label="Show joystick controls"
+                      >
+                        🕹
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setControlExplainer('keyboard')}
+                        className={`arcade-control-toggle ${controlExplainer === 'keyboard' ? 'arcade-control-toggle--active' : ''}`}
+                        aria-label="Show keyboard controls"
+                      >
+                        ⌨
+                      </button>
+                    </div>
                     {controlExplainer === 'joystick' ? (
                       <>
                         <p>Jump / Accept: Red Button</p>
