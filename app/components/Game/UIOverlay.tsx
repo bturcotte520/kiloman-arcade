@@ -79,6 +79,7 @@ const UIOverlay: React.FC<UIOverlayProps> = ({
   const [adminMode, setAdminMode] = useState(false);
   const [adminSecret, setAdminSecret] = useState('');
   const [adminError, setAdminError] = useState('');
+  const [controlExplainer, setControlExplainer] = useState<'joystick' | 'keyboard'>('joystick');
   const primaryActionRef = useRef<(() => void) | null>(null);
   const initialsRef = useRef(initials);
   const selectedInitialRef = useRef(selectedInitial);
@@ -156,11 +157,39 @@ const UIOverlay: React.FC<UIOverlayProps> = ({
       }
     };
 
+    const handleInitialKeyDown = (event: KeyboardEvent) => {
+      if (gameState !== 'start') return;
+
+      if (/^[a-z]$/i.test(event.key)) {
+        event.preventDefault();
+        const index = selectedInitialRef.current;
+        setInitials((value) => value.map((letter, i) => i === index ? event.key.toUpperCase() : letter));
+        setSelectedInitial((value) => Math.min(INITIAL_SLOT_COUNT - 1, value + 1));
+      } else if (event.key === 'Backspace' || event.key === 'Delete') {
+        event.preventDefault();
+        const index = selectedInitialRef.current;
+        setInitials((value) => value.map((letter, i) => i === index ? ' ' : letter));
+      } else if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        setSelectedInitial((value) => Math.max(0, value - 1));
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        setSelectedInitial((value) => Math.min(INITIAL_SLOT_COUNT - 1, value + 1));
+      } else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+        event.preventDefault();
+        const delta = event.key === 'ArrowUp' ? 1 : -1;
+        const index = selectedInitialRef.current;
+        setInitials((value) => value.map((letter, i) => i === index ? nextLetter(letter, delta) : letter));
+      }
+    };
+
     window.addEventListener(MENU_EVENT_NAME, handleMenuAction);
     window.addEventListener(MENU_NAV_EVENT_NAME, handleMenuNav as EventListener);
+    window.addEventListener('keydown', handleInitialKeyDown);
     return () => {
       window.removeEventListener(MENU_EVENT_NAME, handleMenuAction);
       window.removeEventListener(MENU_NAV_EVENT_NAME, handleMenuNav as EventListener);
+      window.removeEventListener('keydown', handleInitialKeyDown);
     };
   }, [gameState]);
 
@@ -245,8 +274,25 @@ const UIOverlay: React.FC<UIOverlayProps> = ({
                   </div>
 
                   <div className="arcade-instructions mb-8">
-                    <p>Jump / Accept: Red Button</p>
-                    <p>Move: Joystick</p>
+                    <button
+                      type="button"
+                      onClick={() => setControlExplainer((value) => value === 'joystick' ? 'keyboard' : 'joystick')}
+                      className="arcade-control-toggle mb-3"
+                    >
+                      {controlExplainer === 'joystick' ? 'SHOW KEYBOARD' : 'SHOW JOYSTICK'}
+                    </button>
+                    {controlExplainer === 'joystick' ? (
+                      <>
+                        <p>Jump / Accept: Red Button</p>
+                        <p>Move: Joystick</p>
+                      </>
+                    ) : (
+                      <>
+                        <p>Type Letters: Change Initial</p>
+                        <p>Arrows: Move / Cycle</p>
+                        <p>Space: Start / Jump</p>
+                      </>
+                    )}
                   </div>
 
                   <button onClick={startTurn} disabled={!canStart} className="arcade-button text-3xl disabled:opacity-50 disabled:translate-y-0 disabled:shadow-none">

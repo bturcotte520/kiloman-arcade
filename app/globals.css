@@ -273,7 +273,8 @@ body {
 }
 
 .arcade-admin-button,
-.arcade-delete-button {
+.arcade-delete-button,
+.arcade-control-toggle {
   border: 2px solid #facc15;
   border-radius: 9999px;
   background: rgba(127, 29, 29, 0.75);
@@ -282,6 +283,12 @@ body {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   font-weight: 900;
   letter-spacing: 0.08em;
+}
+
+.arcade-control-toggle {
+  background: rgba(15, 23, 42, 0.85);
+  color: #fde047;
+  font-size: 14px;
 }
 
 .arcade-delete-button {
