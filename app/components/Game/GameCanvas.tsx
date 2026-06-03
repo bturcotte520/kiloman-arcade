@@ -12,7 +12,7 @@ const PLATFORM_HEIGHT = 22;
 const MAX_REACHABLE_GAP = 120;
 const MAX_REACHABLE_CLIMB = 55;
 const PLAYER_MAX_SPEED = 8.0;
-const AUTOSCROLL_START_SPEED = 0.78;
+const AUTOSCROLL_START_SPEED = 0.84;
 const AUTOSCROLL_MAX_SPEED = PLAYER_MAX_SPEED * 0.9;
 const WALL_PADDING = 18;
 const MONSTER_PLATFORM_WIDTH_BONUS = 35;
@@ -65,7 +65,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
   
   // Game Constants
   const CONFIG: GameConfig = {
-    gravity: 0.6,
+    gravity: 0.66,
     friction: 0.85,
     moveSpeed: 0.8,
     maxSpeed: PLAYER_MAX_SPEED,
