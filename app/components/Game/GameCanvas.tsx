@@ -659,8 +659,20 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
     // Animation Offset
     const bob = Math.sin(frameCountRef.current * 0.2) * (Math.abs(p.vx) > 0.1 ? 3 : 1);
 
-    // Legs
+    // Black silhouette pass for readability against neon backgrounds.
     const legOffset = Math.sin(frameCountRef.current * 0.4) * 10 * (Math.abs(p.vx) > 0.1 ? 1 : 0);
+    ctx.fillStyle = '#050505';
+    ctx.fillRect(cx - 10 + legOffset, y + 28, 10, 24);
+    ctx.fillRect(cx + 0 - legOffset, y + 28, 10, 24);
+    ctx.fillRect(cx - 13, y + 12 + bob, 26, 26);
+    ctx.beginPath();
+    ctx.arc(cx, y + 10 + bob, 15, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Body Color
+    ctx.fillStyle = '#eab308'; // Yellow 500
+
+    // Legs
     ctx.fillRect(cx - 8 + legOffset, y + 30, 6, 20); // Left Leg
     ctx.fillRect(cx + 2 - legOffset, y + 30, 6, 20); // Right Leg
 
