@@ -938,13 +938,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
         player.y < m.y + m.h &&
         player.y + player.height > m.y
       ) {
-        const previousBottom = player.y + player.height - player.vy;
-        const currentBottom = player.y + player.height;
-        const playerWasFalling = player.vy > 0;
-        const feetAreAboveMonsterMiddle = currentBottom <= m.y + m.h * 0.72;
-        const crossedMonsterTop = previousBottom <= m.y + m.h * 0.65;
-        const playerWasStomping = playerWasFalling && (feetAreAboveMonsterMiddle || crossedMonsterTop);
-        if (playerWasStomping) {
+        if (player.vy > 0) {
           scorePopupsRef.current.push({ id: frameCountRef.current, x: m.x + m.w / 2, y: m.y - 8, value: MONSTER_POINTS, age: 0 });
           monsters.splice(i, 1);
           bonusScoreRef.current += MONSTER_POINTS;
