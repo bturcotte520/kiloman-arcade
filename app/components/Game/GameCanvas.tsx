@@ -7,6 +7,7 @@ const MENU_NAV_EVENT_NAME = 'kiloman:menu-nav';
 const CHUNK_WIDTH = 900;
 const RENDER_BUFFER = 1400;
 const MONSTER_POINTS = 10;
+const CHIP_POINTS = 5;
 const SCORE_POPUP_LIFETIME = 55;
 const GROUND_Y = 550;
 const PLATFORM_HEIGHT = 22;
@@ -182,6 +183,18 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
     }
 
     const platforms = entities.filter(e => e.type === 'platform' && e.w >= 135);
+    platforms.forEach((platform, i) => {
+      if (chunk > 0 && i % 3 === 1 && range(chunk * 71 + i, 0, 1) > 0.38) {
+        entities.push({
+          id: `chip-${chunk}-${i}`,
+          x: platform.x + platform.w / 2 - 14,
+          y: platform.y - 95 - range(chunk * 73 + i, 0, 45),
+          w: 28,
+          h: 28,
+          type: 'chip',
+        });
+      }
+    });
     const monsterCount = chunk < 2 ? 0 : Math.min(platforms.length, 1 + Math.floor(range(chunk * 41, 0, difficulty * 2.2)));
     for (let i = 0; i < monsterCount; i++) {
       const platform = platforms[Math.floor(range(chunk * 43 + i, 0, platforms.length))];
@@ -723,6 +736,42 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
     ctx.fillRect(cx + 3, cy - 5, 5, 5);
   };
 
+  const drawChip = (ctx: CanvasRenderingContext2D, entity: LevelEntity, cameraX: number, cameraY: number) => {
+    const x = entity.x + entity.w / 2 - cameraX;
+    const y = entity.y + entity.h / 2 - cameraY + Math.sin((frameCountRef.current + entity.x) * 0.08) * 4;
+    const radius = entity.w / 2;
+
+    ctx.save();
+    ctx.fillStyle = '#ef4444';
+    ctx.strokeStyle = '#fef3c7';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.strokeStyle = '#fef3c7';
+    ctx.lineWidth = 3;
+    for (let i = 0; i < 8; i++) {
+      const angle = (Math.PI * 2 * i) / 8;
+      ctx.beginPath();
+      ctx.moveTo(x + Math.cos(angle) * (radius - 7), y + Math.sin(angle) * (radius - 7));
+      ctx.lineTo(x + Math.cos(angle) * radius, y + Math.sin(angle) * radius);
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = '#fef3c7';
+    ctx.beginPath();
+    ctx.arc(x, y, radius * 0.42, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#7f1d1d';
+    ctx.font = 'bold 13px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('5', x, y + 1);
+    ctx.restore();
+  };
+
   const drawScorePopups = (ctx: CanvasRenderingContext2D, cameraX: number, cameraY: number) => {
     scorePopupsRef.current.forEach((popup) => {
       const alpha = 1 - popup.age / SCORE_POPUP_LIFETIME;
@@ -827,7 +876,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
     }
 
     // Entity Collision
-    for (const entity of entitiesRef.current) {
+    for (let entityIndex = entitiesRef.current.length - 1; entityIndex >= 0; entityIndex--) {
+      const entity = entitiesRef.current[entityIndex];
       // Skip monster entities in static check (handled separately)
       if (entity.type === 'monster') continue;
 
@@ -837,6 +887,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
         player.y < entity.y + entity.h &&
         player.y + player.height > entity.y
       ) {
+        if (entity.type === 'chip') {
+          scorePopupsRef.current.push({ id: frameCountRef.current + entityIndex, x: entity.x + entity.w / 2, y: entity.y, value: CHIP_POINTS, age: 0 });
+          bonusScoreRef.current += CHIP_POINTS;
+          entitiesRef.current.splice(entityIndex, 1);
+          continue;
+        }
+
         if (entity.type === 'hazard') {
           setGameStateRef.current('lost');
           return;
@@ -881,7 +938,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
         player.y < m.y + m.h &&
         player.y + player.height > m.y
       ) {
-        const playerWasFalling = player.vy > 0 && player.y + player.height - player.vy <= m.y + 10;
+        const previousBottom = player.y + player.height - player.vy;
+        const playerWasFalling = player.vy > 0 && previousBottom <= m.y + m.h * 0.55;
         if (playerWasFalling) {
           scorePopupsRef.current.push({ id: frameCountRef.current, x: m.x + m.w / 2, y: m.y - 8, value: MONSTER_POINTS, age: 0 });
           monsters.splice(i, 1);
@@ -984,6 +1042,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
         ctx.strokeStyle = '#fff';
         ctx.lineWidth = 2;
         ctx.strokeRect(x, y, entity.w, entity.h);
+      } else if (entity.type === 'chip') {
+        drawChip(ctx, entity, cameraX, cameraY);
       }
     });
 

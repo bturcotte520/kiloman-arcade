@@ -1,4 +1,4 @@
-export type EntityType = 'platform' | 'hazard' | 'goal' | 'start' | 'monster';
+export type EntityType = 'platform' | 'hazard' | 'goal' | 'start' | 'monster' | 'chip';
 
 export interface LevelEntity {
   id: string;
