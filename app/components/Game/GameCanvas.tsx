@@ -7,7 +7,6 @@ const MENU_NAV_EVENT_NAME = 'kiloman:menu-nav';
 const CHUNK_WIDTH = 900;
 const RENDER_BUFFER = 1400;
 const MONSTER_POINTS = 10;
-const CHIP_POINTS = 5;
 const SCORE_POPUP_LIFETIME = 55;
 const GROUND_Y = 550;
 const PLATFORM_HEIGHT = 22;
@@ -35,6 +34,8 @@ const range = (seed: number, min: number, max: number) => min + seededRandom(see
 const difficultyForChunk = (chunk: number) => Math.min(1, chunk / 18);
 
 const enemySpeedForX = (x: number) => Math.min(6.5, 0.75 + x / 3200);
+
+const chipValueForChunk = (chunk: number) => 5 + Math.min(20, Math.floor(chunk / 5) * 5);
 
 const wrapSceneX = (x: number, width: number) => ((x % width) + width) % width;
 
@@ -184,7 +185,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
 
     const platforms = entities.filter(e => e.type === 'platform' && e.w >= 135);
     platforms.forEach((platform, i) => {
-      if (chunk > 0 && i % 3 === 1 && range(chunk * 71 + i, 0, 1) > 0.38) {
+      if (chunk > 0 && i % 2 === 1 && range(chunk * 71 + i, 0, 1) > 0.22) {
+        const value = chipValueForChunk(chunk);
         entities.push({
           id: `chip-${chunk}-${i}`,
           x: platform.x + platform.w / 2 - 14,
@@ -192,6 +194,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
           w: 28,
           h: 28,
           type: 'chip',
+          value,
         });
       }
     });
@@ -740,9 +743,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
     const x = entity.x + entity.w / 2 - cameraX;
     const y = entity.y + entity.h / 2 - cameraY + Math.sin((frameCountRef.current + entity.x) * 0.08) * 4;
     const radius = entity.w / 2;
+    const value = entity.value ?? 5;
+    const chipColor = value >= 25 ? '#a855f7' : value >= 20 ? '#3b82f6' : value >= 15 ? '#22c55e' : value >= 10 ? '#f59e0b' : '#ef4444';
 
     ctx.save();
-    ctx.fillStyle = '#ef4444';
+    ctx.fillStyle = chipColor;
     ctx.strokeStyle = '#fef3c7';
     ctx.lineWidth = 4;
     ctx.beginPath();
@@ -768,7 +773,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
     ctx.font = 'bold 13px monospace';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('5', x, y + 1);
+    ctx.fillText(String(value), x, y + 1);
     ctx.restore();
   };
 
@@ -842,6 +847,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
 
     // --- MONSTER LOGIC ---
     monsters.forEach(m => {
+      if (m.defeated) {
+        m.vy = (m.vy ?? -3) + CONFIG.gravity;
+        m.y += m.vy;
+        m.x += m.vx * 0.35;
+        return;
+      }
+
       m.x += m.vx;
       // Patrol Logic
       if (m.x <= m.patrolStart) {
@@ -870,6 +882,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
     }
     const canvas = canvasRef.current;
     const fallDeathY = cameraRef.current.y + (canvas?.height ?? dimensions.height) + FALL_DEATH_SCREEN_MARGIN;
+    monstersRef.current = monstersRef.current.filter(m => !m.defeated || m.y < fallDeathY);
     if (player.y > fallDeathY) {
       setGameStateRef.current('lost');
       return;
@@ -879,6 +892,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
     // Landing on a monster that is on a platform should count as a stomp before the platform zeroes vy.
     for (let i = monsters.length - 1; i >= 0; i--) {
       const m = monsters[i];
+      if (m.defeated) continue;
       if (
         player.x < m.x + m.w &&
         player.x + player.width > m.x &&
@@ -889,7 +903,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
         const stompZoneBottom = m.y + m.h * 0.7;
         if (playerFeet <= stompZoneBottom) {
           scorePopupsRef.current.push({ id: frameCountRef.current, x: m.x + m.w / 2, y: m.y - 8, value: MONSTER_POINTS, age: 0 });
-          monsters.splice(i, 1);
+          m.defeated = true;
+          m.vy = -3;
+          m.vx = player.facing * 2;
           bonusScoreRef.current += MONSTER_POINTS;
           player.vy = CONFIG.baseJumpForce * 0.55;
           continue;
@@ -913,8 +929,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
         player.y + player.height > entity.y
       ) {
         if (entity.type === 'chip') {
-          scorePopupsRef.current.push({ id: frameCountRef.current + entityIndex, x: entity.x + entity.w / 2, y: entity.y, value: CHIP_POINTS, age: 0 });
-          bonusScoreRef.current += CHIP_POINTS;
+          const chipValue = entity.value ?? 5;
+          scorePopupsRef.current.push({ id: frameCountRef.current + entityIndex, x: entity.x + entity.w / 2, y: entity.y, value: chipValue, age: 0 });
+          bonusScoreRef.current += chipValue;
           entitiesRef.current.splice(entityIndex, 1);
           continue;
         }

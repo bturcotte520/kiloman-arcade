@@ -10,6 +10,7 @@ export interface LevelEntity {
   // Visual properties
   color?: string;
   showStartArrow?: boolean;
+  value?: number;
   // Monster specific properties
   patrolStart?: number;
   patrolEnd?: number;
@@ -38,6 +39,8 @@ export interface MonsterState {
   patrolStart: number;
   patrolEnd: number;
   speed: number;
+  defeated?: boolean;
+  vy?: number;
 }
 
 export type GameStatus = 'start' | 'countdown' | 'playing' | 'won' | 'lost';
