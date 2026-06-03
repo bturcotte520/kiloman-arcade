@@ -875,6 +875,29 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
       return;
     }
 
+    // Monster Collision (Player vs Monster) must run before platform collision.
+    // Landing on a monster that is on a platform should count as a stomp before the platform zeroes vy.
+    for (let i = monsters.length - 1; i >= 0; i--) {
+      const m = monsters[i];
+      if (
+        player.x < m.x + m.w &&
+        player.x + player.width > m.x &&
+        player.y < m.y + m.h &&
+        player.y + player.height > m.y
+      ) {
+        if (player.vy > 0) {
+          scorePopupsRef.current.push({ id: frameCountRef.current, x: m.x + m.w / 2, y: m.y - 8, value: MONSTER_POINTS, age: 0 });
+          monsters.splice(i, 1);
+          bonusScoreRef.current += MONSTER_POINTS;
+          player.vy = CONFIG.baseJumpForce * 0.55;
+          continue;
+        }
+
+        setGameStateRef.current('lost');
+        return;
+      }
+    }
+
     // Entity Collision
     for (let entityIndex = entitiesRef.current.length - 1; entityIndex >= 0; entityIndex--) {
       const entity = entitiesRef.current[entityIndex];
@@ -926,28 +949,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
             player.vx = 0;
           }
         }
-      }
-    }
-
-    // Monster Collision (Player vs Monster)
-    for (let i = monsters.length - 1; i >= 0; i--) {
-      const m = monsters[i];
-      if (
-        player.x < m.x + m.w &&
-        player.x + player.width > m.x &&
-        player.y < m.y + m.h &&
-        player.y + player.height > m.y
-      ) {
-        if (player.vy > 0) {
-          scorePopupsRef.current.push({ id: frameCountRef.current, x: m.x + m.w / 2, y: m.y - 8, value: MONSTER_POINTS, age: 0 });
-          monsters.splice(i, 1);
-          bonusScoreRef.current += MONSTER_POINTS;
-          player.vy = CONFIG.baseJumpForce * 0.55;
-          continue;
-        }
-
-        setGameStateRef.current('lost');
-        return;
       }
     }
 
