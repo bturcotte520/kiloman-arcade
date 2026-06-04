@@ -30,6 +30,10 @@ function nextLetter(letter: string, delta: number) {
   return INITIAL_CHOICES[(index + delta + INITIAL_CHOICES.length) % INITIAL_CHOICES.length];
 }
 
+function isTextInputTarget(target: EventTarget | null) {
+  return target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement;
+}
+
 interface VegasBulbRingProps {
   reverse?: boolean;
   startOffset?: number;
@@ -159,6 +163,7 @@ const UIOverlay: React.FC<UIOverlayProps> = ({
 
     const handleInitialKeyDown = (event: KeyboardEvent) => {
       if (gameState !== 'start') return;
+      if (isTextInputTarget(event.target)) return;
 
       if (/^[a-z]$/i.test(event.key)) {
         event.preventDefault();
