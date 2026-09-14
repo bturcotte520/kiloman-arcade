@@ -7,7 +7,8 @@ const MENU_EVENT_NAME = 'kiloman:menu-action';
 const MENU_NAV_EVENT_NAME = 'kiloman:menu-nav';
 const NAME_MAX_LENGTH = 20;
 const DEATH_ACTION_DELAY_MS = 900;
-const VEGAS_BULB_COUNT = 40;
+const NYC_LINE_COUNT = 40;
+const NYC_LINE_COLORS = ['#ee352e', '#ff6319', '#fccc0a', '#00933c', '#0039a6', '#b933ad', '#808183', '#996633'];
 
 type AdminActionType = 'archive' | 'purge';
 
@@ -33,18 +34,18 @@ interface UIOverlayProps {
   onSpeedChange: (value: number) => void;
 }
 
-interface VegasBulbRingProps {
+interface NycLineRingProps {
   reverse?: boolean;
   startOffset?: number;
 }
 
-const VegasBulbRing: React.FC<VegasBulbRingProps> = ({ reverse = false, startOffset = 0 }) => (
-  <div className="vegas-bulb-ring" aria-hidden="true">
-    {Array.from({ length: VEGAS_BULB_COUNT }, (_, index) => {
-      const progress = index / VEGAS_BULB_COUNT;
+const NycLineRing: React.FC<NycLineRingProps> = ({ reverse = false, startOffset = 0 }) => (
+  <div className="nyc-line-ring" aria-hidden="true">
+    {Array.from({ length: NYC_LINE_COUNT }, (_, index) => {
+      const progress = index / NYC_LINE_COUNT;
       const chaseIndex = reverse
-        ? (VEGAS_BULB_COUNT - index + startOffset) % VEGAS_BULB_COUNT
-        : (index + startOffset) % VEGAS_BULB_COUNT;
+        ? (NYC_LINE_COUNT - index + startOffset) % NYC_LINE_COUNT
+        : (index + startOffset) % NYC_LINE_COUNT;
       let style: React.CSSProperties;
 
       if (progress < 0.25) {
@@ -57,7 +58,13 @@ const VegasBulbRing: React.FC<VegasBulbRingProps> = ({ reverse = false, startOff
         style = { left: '0%', top: `${(1 - (progress - 0.75) * 4) * 100}%` };
       }
 
-      return <span key={index} className="vegas-bulb" style={{ ...style, '--bulb-index': chaseIndex } as React.CSSProperties} />;
+      return (
+        <span
+          key={index}
+          className="nyc-badge"
+          style={{ ...style, '--badge-index': chaseIndex, '--badge-color': NYC_LINE_COLORS[index % NYC_LINE_COLORS.length] } as React.CSSProperties}
+        />
+      );
     })}
   </div>
 );
@@ -344,14 +351,14 @@ const UIOverlay: React.FC<UIOverlayProps> = ({
             <div className="anaconda-logo-home mb-4">
               <Image src="/anaconda-logo.svg" alt="Anaconda" width={96} height={96} className="anaconda-logo anaconda-logo--home" />
             </div>
-            <div className="vegas-title-wrap mb-7 text-center">
-              <h1 className="vegas-title-main">KILO MAN</h1>
-              <div className="vegas-title-script">in Vegas</div>
+            <div className="nyc-title-wrap mb-7 text-center">
+              <h1 className="nyc-title-main">KILO MAN</h1>
+              <div className="nyc-title-script">in NYC</div>
             </div>
 
             <div className="grid lg:grid-cols-[minmax(0,1fr)_460px] gap-6">
-              <div className="vegas-bulb-frame">
-                <VegasBulbRing startOffset={VEGAS_BULB_COUNT / 4} />
+              <div className="nyc-frame">
+                <NycLineRing startOffset={NYC_LINE_COUNT / 4} />
                 <div className="arcade-panel arcade-menu p-8 text-center h-full">
                   <p className="arcade-copy text-2xl mb-4">ENTER YOUR CHARACTER NAME</p>
                   <p className="arcade-help mb-6">Up to {NAME_MAX_LENGTH} characters</p>
@@ -435,8 +442,8 @@ const UIOverlay: React.FC<UIOverlayProps> = ({
                 </div>
               </div>
 
-              <div className="vegas-bulb-frame">
-                <VegasBulbRing reverse startOffset={VEGAS_BULB_COUNT / 2} />
+              <div className="nyc-frame">
+                <NycLineRing reverse startOffset={NYC_LINE_COUNT / 2} />
                 <div className="arcade-panel p-6 text-yellow-300 h-full">
                   <h2 className="arcade-title text-4xl mb-5 text-center">TOP SCORES</h2>
                   {adminError && <p className="arcade-help text-center text-red-300 mb-4">{adminError}</p>}

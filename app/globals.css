@@ -62,9 +62,9 @@ body {
   width: 64px;
   height: 64px;
   border-radius: 9999px;
-  border: 2px solid rgba(234, 179, 8, 0.9); /* yellow-500-ish */
+  border: 2px solid rgba(247, 181, 0, 0.9); /* taxi yellow */
   background: rgba(0, 0, 0, 0.6);
-  color: rgba(234, 179, 8, 0.95);
+  color: rgba(247, 181, 0, 0.95);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   font-weight: 700;
   user-select: none;
@@ -75,7 +75,7 @@ body {
 
 .kiloman-touch-button:active {
   transform: translateY(1px);
-  background: rgba(234, 179, 8, 0.15);
+  background: rgba(247, 181, 0, 0.15);
 }
 
 .kiloman-touch-button--action {
@@ -95,7 +95,7 @@ body {
 
 .kiloman-death-image {
   animation: kiloman-death-stamp 980ms cubic-bezier(0.18, 0.89, 0.32, 1.18) both;
-  filter: drop-shadow(0 0 22px rgba(234, 179, 8, 0.75));
+  filter: drop-shadow(0 0 22px rgba(247, 181, 0, 0.75));
   transform-origin: center center;
 }
 
@@ -106,7 +106,7 @@ body {
 .arcade-root {
   font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
   letter-spacing: 0.08em;
-  text-shadow: 0 3px 0 #000, 0 0 18px rgba(234, 179, 8, 0.55);
+  text-shadow: 0 3px 0 #000, 0 0 18px rgba(247, 181, 0, 0.55);
 }
 
 .anaconda-logo-row {
@@ -135,75 +135,97 @@ body {
 }
 
 .arcade-panel {
-  border: 4px solid #facc15;
+  border: 4px solid #f7b500;
   border-radius: 18px;
   background:
-    linear-gradient(rgba(250, 204, 21, 0.08) 50%, rgba(0, 0, 0, 0.08) 50%),
-    radial-gradient(circle at top, rgba(127, 29, 29, 0.55), rgba(0, 0, 0, 0.95) 62%);
+    linear-gradient(rgba(247, 181, 0, 0.08) 50%, rgba(0, 0, 0, 0.08) 50%),
+    radial-gradient(circle at top, rgba(13, 21, 38, 0.92), rgba(0, 0, 0, 0.97) 62%);
   background-size: 100% 8px, 100% 100%;
-  box-shadow: 0 0 0 4px #7f1d1d, 0 0 30px rgba(250, 204, 21, 0.35), inset 0 0 26px rgba(250, 204, 21, 0.18);
+  box-shadow: 0 0 0 4px #0d1526, 0 0 30px rgba(247, 181, 0, 0.3), inset 0 0 26px rgba(247, 181, 0, 0.15);
 }
 
-.vegas-title-wrap {
+.nyc-title-wrap {
   position: relative;
   display: flex;
   justify-content: center;
   align-items: flex-end;
   min-height: 150px;
-  filter: drop-shadow(0 10px 0 #020617) drop-shadow(0 0 36px rgba(250, 204, 21, 0.55));
+  filter: drop-shadow(0 10px 0 #05070c) drop-shadow(0 0 36px rgba(247, 181, 0, 0.5));
 }
 
-.vegas-title-main {
-  color: #facc15;
+.nyc-title-main {
+  color: #f7b500;
   font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
   font-size: clamp(76px, 13vw, 168px);
   line-height: 0.78;
   letter-spacing: 0.07em;
-  -webkit-text-stroke: clamp(3px, 0.45vw, 7px) #7f1d1d;
-  text-shadow: 0 6px 0 #450a0a, 0 0 28px rgba(250, 204, 21, 0.95), 0 0 70px rgba(220, 38, 38, 0.75);
+  -webkit-text-stroke: clamp(3px, 0.45vw, 7px) #101418;
+  text-shadow: 0 6px 0 #05070c, 0 0 28px rgba(247, 181, 0, 0.95), 0 0 70px rgba(0, 57, 166, 0.75);
 }
 
-.vegas-title-script {
+.nyc-title-script {
   position: absolute;
   right: clamp(8px, 10vw, 120px);
   bottom: -8px;
-  color: #fef3c7;
+  color: #f8fafc;
   font-family: "Brush Script MT", "Apple Chancery", "Segoe Script", cursive;
   font-size: clamp(38px, 6vw, 82px);
   font-style: italic;
   letter-spacing: 0.01em;
   transform: rotate(-8deg);
-  -webkit-text-stroke: 2px #be123c;
-  text-shadow: 0 3px 0 #7f1d1d, 0 0 22px rgba(244, 63, 94, 0.95), 0 0 44px rgba(250, 204, 21, 0.75);
+  -webkit-text-stroke: 2px #0039a6;
+  text-shadow: 0 3px 0 #0d1526, 0 0 22px rgba(96, 165, 250, 0.95), 0 0 44px rgba(247, 181, 0, 0.7);
 }
 
-.vegas-bulb-frame {
+.nyc-frame {
   position: relative;
   padding: 20px;
   border-radius: 28px;
-  background: #450a0a;
-  box-shadow: 0 0 34px rgba(250, 204, 21, 0.28), inset 0 0 18px rgba(0, 0, 0, 0.7);
+  background: #0d1526;
+  box-shadow: 0 0 34px rgba(247, 181, 0, 0.24), inset 0 0 18px rgba(0, 0, 0, 0.7);
 }
 
-.vegas-bulb-ring {
+/* Taxi-checker strips along the frame edges. */
+.nyc-frame::before,
+.nyc-frame::after {
+  content: '';
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  height: 7px;
+  border-radius: 4px;
+  background: repeating-linear-gradient(90deg, #f7b500 0 11px, #101418 11px 22px);
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.nyc-frame::before {
+  top: 6px;
+}
+
+.nyc-frame::after {
+  bottom: 6px;
+}
+
+.nyc-line-ring {
   position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 2;
 }
 
-.vegas-bulb {
-  --bulb-size: 18px;
+.nyc-badge {
+  --badge-size: 18px;
   position: absolute;
-  width: var(--bulb-size);
-  height: var(--bulb-size);
+  width: var(--badge-size);
+  height: var(--badge-size);
   border-radius: 9999px;
-  background: radial-gradient(circle at 35% 30%, #fff8bf 0 14%, #ca8a04 22% 52%, #78350f 70%);
-  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.75), 0 0 0 2px #78350f;
-  opacity: 0.52;
+  background: radial-gradient(circle at 35% 30%, #4b5563 0 30%, #1f2937 70%);
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.75), 0 0 0 2px #111827;
+  opacity: 0.55;
   transform: translate(-50%, -50%);
-  animation: vegas-single-bulb-chase 2s steps(1, end) infinite;
-  animation-delay: calc(var(--bulb-index) * -50ms);
+  animation: nyc-badge-chase 2s steps(1, end) infinite;
+  animation-delay: calc(var(--badge-index) * -50ms);
 }
 
 .arcade-menu {
@@ -212,9 +234,9 @@ body {
 
 .arcade-title {
   line-height: 0.92;
-  color: #facc15;
+  color: #f7b500;
   text-transform: uppercase;
-  -webkit-text-stroke: 2px #7f1d1d;
+  -webkit-text-stroke: 2px #101418;
 }
 
 .arcade-copy,
@@ -223,7 +245,7 @@ body {
 .arcade-stat-grid {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   letter-spacing: 0.03em;
-  text-shadow: 0 0 12px rgba(250, 204, 21, 0.45);
+  text-shadow: 0 0 12px rgba(247, 181, 0, 0.45);
 }
 
 .arcade-copy {
@@ -248,40 +270,40 @@ body {
   min-width: 240px;
   border: 4px solid #fef3c7;
   border-radius: 9999px;
-  background: linear-gradient(#fde047, #f59e0b);
+  background: linear-gradient(#fcd34d, #f7b500);
   color: #111827;
   padding: 16px 34px;
   font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
   font-size: 28px;
   letter-spacing: 0.09em;
   text-shadow: 0 2px 0 rgba(255, 255, 255, 0.35);
-  box-shadow: 0 8px 0 #7f1d1d, 0 0 22px rgba(250, 204, 21, 0.55);
+  box-shadow: 0 8px 0 #101418, 0 0 22px rgba(247, 181, 0, 0.55);
   transition: transform 120ms ease, box-shadow 120ms ease;
 }
 
 .arcade-button:hover,
 .arcade-button:focus-visible {
   transform: translateY(2px);
-  box-shadow: 0 5px 0 #7f1d1d, 0 0 30px rgba(250, 204, 21, 0.8);
+  box-shadow: 0 5px 0 #101418, 0 0 30px rgba(247, 181, 0, 0.8);
   outline: none;
 }
 
 .arcade-initial {
   width: clamp(88px, 16vw, 132px);
   height: clamp(104px, 18vw, 152px);
-  border: 4px solid #facc15;
+  border: 4px solid #f7b500;
   border-radius: 16px;
-  background: #0f172a;
-  color: #facc15;
+  background: #0d1526;
+  color: #f7b500;
   font-size: clamp(64px, 12vw, 104px);
   line-height: 1;
-  box-shadow: inset 0 0 22px rgba(250, 204, 21, 0.2), 0 0 18px rgba(250, 204, 21, 0.28);
+  box-shadow: inset 0 0 22px rgba(247, 181, 0, 0.2), 0 0 18px rgba(247, 181, 0, 0.28);
 }
 
 .arcade-initial--active {
   animation: arcade-active-pulse 850ms steps(2, end) infinite;
-  background: #7f1d1d;
-  color: #fef3c7;
+  background: #0039a6;
+  color: #f8fafc;
   transform: translateY(-8px);
 }
 
@@ -290,7 +312,7 @@ body {
   grid-template-columns: 40px minmax(0, 1fr) auto auto;
   gap: 10px;
   align-items: center;
-  border-bottom: 2px dashed rgba(250, 204, 21, 0.45);
+  border-bottom: 2px dashed rgba(247, 181, 0, 0.45);
   padding-bottom: 8px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   font-size: 22px;
@@ -306,9 +328,9 @@ body {
 .arcade-admin-button,
 .arcade-delete-button,
 .arcade-control-toggle {
-  border: 2px solid #facc15;
+  border: 2px solid #f7b500;
   border-radius: 9999px;
-  background: rgba(127, 29, 29, 0.75);
+  background: rgba(13, 21, 38, 0.85);
   color: #fef3c7;
   padding: 8px 16px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
@@ -317,7 +339,7 @@ body {
 }
 
 .arcade-control-toggle {
-  background: rgba(15, 23, 42, 0.85);
+  background: rgba(13, 21, 38, 0.85);
   color: #fde047;
   font-size: 22px;
   line-height: 1;
@@ -333,9 +355,9 @@ body {
 }
 
 .arcade-control-toggle--active {
-  background: #facc15;
+  background: #f7b500;
   color: #111827;
-  box-shadow: 0 0 18px rgba(250, 204, 21, 0.75);
+  box-shadow: 0 0 18px rgba(247, 181, 0, 0.75);
 }
 
 .arcade-delete-button {
@@ -346,9 +368,9 @@ body {
 }
 
 .arcade-mute-button {
-  border: 1px solid rgba(250, 204, 21, 0.5);
-  background: rgba(15, 23, 42, 0.85);
-  color: rgba(250, 204, 21, 0.9);
+  border: 1px solid rgba(247, 181, 0, 0.5);
+  background: rgba(13, 21, 38, 0.85);
+  color: rgba(247, 181, 0, 0.9);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   font-weight: 900;
   letter-spacing: 0.08em;
@@ -359,7 +381,7 @@ body {
 }
 
 .arcade-mute-button:hover {
-  border-color: rgba(250, 204, 21, 0.95);
+  border-color: rgba(247, 181, 0, 0.95);
   color: #fef3c7;
 }
 
@@ -384,7 +406,7 @@ body {
   width: 100%;
   height: 8px;
   border-radius: 4px;
-  background: linear-gradient(to right, #78350f, #facc15);
+  background: linear-gradient(to right, #334155, #f7b500);
   outline: none;
   cursor: pointer;
 }
@@ -396,8 +418,8 @@ body {
   height: 20px;
   border-radius: 50%;
   background: #fef3c7;
-  border: 3px solid #facc15;
-  box-shadow: 0 0 8px rgba(250, 204, 21, 0.6);
+  border: 3px solid #f7b500;
+  box-shadow: 0 0 8px rgba(247, 181, 0, 0.6);
   cursor: pointer;
 }
 
@@ -406,8 +428,8 @@ body {
   height: 20px;
   border-radius: 50%;
   background: #fef3c7;
-  border: 3px solid #facc15;
-  box-shadow: 0 0 8px rgba(250, 204, 21, 0.6);
+  border: 3px solid #f7b500;
+  box-shadow: 0 0 8px rgba(247, 181, 0, 0.6);
   cursor: pointer;
 }
 
@@ -430,7 +452,7 @@ body {
 .arcade-admin-link {
   border: none;
   background: none;
-  color: rgba(250, 204, 21, 0.35);
+  color: rgba(247, 181, 0, 0.35);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   font-size: 12px;
   letter-spacing: 0.12em;
@@ -439,13 +461,13 @@ body {
 }
 
 .arcade-admin-link:hover {
-  color: rgba(250, 204, 21, 0.8);
+  color: rgba(247, 181, 0, 0.8);
 }
 
 .arcade-admin-input {
-  border: 2px solid #facc15;
+  border: 2px solid #f7b500;
   border-radius: 10px;
-  background: #020617;
+  background: #05070c;
   color: #fef3c7;
   padding: 10px 12px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
@@ -455,7 +477,7 @@ body {
 }
 
 .arcade-score-card {
-  border: 3px dashed rgba(250, 204, 21, 0.7);
+  border: 3px dashed rgba(247, 181, 0, 0.7);
   border-radius: 14px;
   padding: 18px;
   background: rgba(0, 0, 0, 0.45);
@@ -466,34 +488,34 @@ body {
 }
 
 .arcade-countdown-number {
-  color: #facc15;
+  color: #f7b500;
   font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
   font-size: clamp(120px, 24vw, 220px);
   line-height: 0.9;
-  -webkit-text-stroke: 5px #7f1d1d;
+  -webkit-text-stroke: 5px #101418;
   animation: arcade-countdown-pop 900ms ease-out both;
-  text-shadow: 0 8px 0 #000, 0 0 42px rgba(250, 204, 21, 0.85);
+  text-shadow: 0 8px 0 #000, 0 0 42px rgba(247, 181, 0, 0.85);
 }
 
 @keyframes arcade-active-pulse {
   0%, 100% {
-    box-shadow: inset 0 0 26px rgba(250, 204, 21, 0.35), 0 0 32px rgba(250, 204, 21, 0.75);
+    box-shadow: inset 0 0 26px rgba(247, 181, 0, 0.35), 0 0 32px rgba(247, 181, 0, 0.75);
   }
   50% {
-    box-shadow: inset 0 0 16px rgba(250, 204, 21, 0.2), 0 0 14px rgba(250, 204, 21, 0.35);
+    box-shadow: inset 0 0 16px rgba(247, 181, 0, 0.2), 0 0 14px rgba(247, 181, 0, 0.35);
   }
 }
 
-@keyframes vegas-single-bulb-chase {
+@keyframes nyc-badge-chase {
   0%, 2.5% {
     opacity: 1;
-    background: radial-gradient(circle at 35% 30%, #ffffff 0 20%, #fde68a 26% 48%, #f59e0b 62%);
-    box-shadow: 0 0 0 2px #fef3c7, 0 0 18px rgba(250, 204, 21, 1), 0 0 34px rgba(250, 204, 21, 0.75);
+    background: var(--badge-color, #ee352e);
+    box-shadow: 0 0 0 2px #f8fafc, 0 0 18px var(--badge-color, #ee352e), 0 0 34px rgba(255, 255, 255, 0.5);
   }
   2.6%, 100% {
-    opacity: 0.52;
-    background: radial-gradient(circle at 35% 30%, #fff8bf 0 14%, #ca8a04 22% 52%, #78350f 70%);
-    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.75), 0 0 0 2px #78350f;
+    opacity: 0.55;
+    background: radial-gradient(circle at 35% 30%, #4b5563 0 30%, #1f2937 70%);
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.75), 0 0 0 2px #111827;
   }
 }
 
@@ -510,15 +532,15 @@ body {
   }
   45% {
     transform: translateY(-8px) scale(4.95, 4.25) rotate(-1deg);
-    filter: blur(0) drop-shadow(0 0 62px rgba(250, 204, 21, 0.9));
+    filter: blur(0) drop-shadow(0 0 62px rgba(247, 181, 0, 0.9));
   }
   72% {
     transform: translateY(0) scale(1.35) rotate(0deg);
-    filter: blur(0) drop-shadow(0 0 32px rgba(234, 179, 8, 0.9));
+    filter: blur(0) drop-shadow(0 0 32px rgba(247, 181, 0, 0.9));
   }
   100% {
     transform: translateY(0) scale(1) rotate(0deg);
-    filter: blur(0) drop-shadow(0 0 22px rgba(234, 179, 8, 0.75));
+    filter: blur(0) drop-shadow(0 0 22px rgba(247, 181, 0, 0.75));
     opacity: 1;
   }
 }
