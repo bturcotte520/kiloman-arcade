@@ -2,6 +2,22 @@ import { NextRequest, NextResponse } from 'next/server';
 import { addScore, getRankings, getTopScores, isAdminSecret, MAX_SCORE_VALUE, SubmissionConflict, UUID_PATTERN } from '@/app/lib/scores';
 import { isStation, sameOrigin, unavailable } from '../_auth';
 
+const publicReadHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Cache-Control': 'no-store',
+};
+
+export function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      ...publicReadHeaders,
+      'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  });
+}
+
 export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
   const pageText = params.get('page') ?? '1';
@@ -9,12 +25,16 @@ export async function GET(request: NextRequest) {
   const searchText = params.get('search') ?? '';
   const search = searchText.trim();
   if (!/^[1-9]\d*$/.test(pageText) || !Number.isSafeInteger(page) || page > 42949672 || searchText.length > 20) {
-    return NextResponse.json({ error: 'Invalid page or search (maximum 20 characters)' }, { status: 400 });
+    return NextResponse.json({ error: 'Invalid page or search (maximum 20 characters)' }, { status: 400, headers: publicReadHeaders });
   }
   try {
     const body = params.has('page') || params.has('search') ? await getRankings(page, search) : { scores: await getTopScores() };
-    return NextResponse.json(body, { headers: { 'Cache-Control': 'no-store' } });
-  } catch { return unavailable(); }
+    return NextResponse.json(body, { headers: publicReadHeaders });
+  } catch {
+    const response = unavailable();
+    for (const [name, value] of Object.entries(publicReadHeaders)) response.headers.set(name, value);
+    return response;
+  }
 }
 
 export async function POST(request: NextRequest) {

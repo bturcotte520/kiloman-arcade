@@ -97,3 +97,52 @@ The station gate is not an anti-cheat system: an authorized station can submit s
 - `POST /api/admin/verify`, `POST /api/admin/archive`, `POST /api/admin/purge`, and `DELETE /api/scores/:id` require `x-admin-secret: <NYC_ADMIN_SECRET>`.
 - All mutation requests must have an `Origin` exactly matching the request URL origin. Cross-origin and missing-origin writes are rejected, including command-line calls unless the correct Origin is explicitly provided. Public reads remain unauthenticated.
 - Database failures return a generic 503; invalid payloads return 400, missing/invalid authorization 401, and origin violations 403.
+
+### External Scoreboard Access
+
+Use `https://<NEW-NYC-HOST>/api/scores` from external services or websites. No API key, station cookie, or admin secret is needed. This endpoint deploys with the app; it is publicly reachable once the new NYC project is deployed and its database is configured.
+
+```bash
+# Top 10 active scores
+curl 'https://<NEW-NYC-HOST>/api/scores'
+
+# All active rankings, 50 per page
+curl 'https://<NEW-NYC-HOST>/api/scores?page=1'
+
+# Search by player name, preserving global rank
+curl 'https://<NEW-NYC-HOST>/api/scores?page=1&search=Brooklyn'
+```
+
+Paginated responses have this shape (example data):
+
+```json
+{
+  "scores": [
+    {
+      "id": "a615a449-6bd1-49e0-8d99-123456789abc",
+      "name": "Brooklyn",
+      "score": 900,
+      "distance": 123,
+      "date": "2026-10-01T14:00:00+00:00",
+      "rank": 1
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "pageSize": 50
+}
+```
+
+`total` counts matching active entries; archived and deleted scores are excluded. Without `page` or `search`, only `{ "scores": [...] }` is returned, limited to the top 10.
+
+For another website, use a credential-free browser request:
+
+```js
+const response = await fetch('https://<NEW-NYC-HOST>/api/scores?page=1', {
+  credentials: 'omit',
+});
+if (!response.ok) throw new Error(`Scoreboard request failed: ${response.status}`);
+const { scores, total, page, pageSize } = await response.json();
+```
+
+Public reads return `Access-Control-Allow-Origin: *` and `Cache-Control: no-store`, including validation and database error responses. `OPTIONS` supports preflight for `GET`/`HEAD` with `Content-Type`. Credentialed cross-origin requests and cross-origin writes are not enabled. Do not send staff secrets. For live displays, polling every 15 seconds matches the built-in scoreboard; back off on errors.

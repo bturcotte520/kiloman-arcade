@@ -57,6 +57,43 @@ test('station authorization, persistent rankings, retries, and admin lifecycle',
   assert.equal((await (await request('/api/scores?page=1&search=%25')).json()).total, 0);
   assert.equal((await (await request('/api/scores')).json()).scores.length, 10);
   assert.match((await request('/api/scores')).headers.get('cache-control'), /no-store/);
+  const externalHeaders = { Origin: 'https://example.com', Cookie: '' };
+  const externalTop = await request('/api/scores', 'GET', undefined, externalHeaders);
+  assert.equal(externalTop.status, 200);
+  assert.equal(externalTop.headers.get('access-control-allow-origin'), '*');
+  assert.equal(externalTop.headers.get('access-control-allow-credentials'), null);
+  assert.match(externalTop.headers.get('cache-control'), /no-store/);
+  assert.equal((await externalTop.json()).scores.length, 10);
+  const externalPage = await request('/api/scores?page=2', 'GET', undefined, externalHeaders);
+  assert.equal(externalPage.headers.get('access-control-allow-origin'), '*');
+  assert.deepEqual(await externalPage.json(), second);
+  const externalSearch = await request('/api/scores?search=BROOK', 'GET', undefined, externalHeaders);
+  assert.equal(externalSearch.headers.get('access-control-allow-origin'), '*');
+  assert.deepEqual(await externalSearch.json(), search);
+  const preflight = await request('/api/scores', 'OPTIONS', undefined, {
+    ...externalHeaders,
+    'Access-Control-Request-Method': 'GET',
+    'Access-Control-Request-Headers': 'content-type',
+  });
+  assert.equal(preflight.status, 204);
+  assert.equal(await preflight.text(), '');
+  assert.equal(preflight.headers.get('access-control-allow-origin'), '*');
+  assert.equal(preflight.headers.get('access-control-allow-methods'), 'GET, HEAD, OPTIONS');
+  assert.equal(preflight.headers.get('access-control-allow-headers'), 'Content-Type');
+  const externalHead = await request('/api/scores', 'HEAD', undefined, externalHeaders);
+  assert.equal(externalHead.status, 200);
+  assert.equal(externalHead.headers.get('access-control-allow-origin'), '*');
+  assert.equal(await externalHead.text(), '');
+  const externalInvalid = await request('/api/scores?page=0', 'GET', undefined, externalHeaders);
+  assert.equal(externalInvalid.status, 400);
+  assert.equal(externalInvalid.headers.get('access-control-allow-origin'), '*');
+  assert.match(externalInvalid.headers.get('cache-control'), /no-store/);
+  const externalWrite = await request('/api/scores', 'POST', score, { Origin: externalHeaders.Origin });
+  assert.equal(externalWrite.status, 403);
+  assert.equal(externalWrite.headers.get('access-control-allow-origin'), null);
+  assert.equal((await request(`/api/scores/${score.submissionId}`, 'DELETE', undefined, {
+    ...adminHeaders, Origin: externalHeaders.Origin,
+  })).status, 403);
   assert.equal((await request('/api/scores?page=-1')).status, 400);
   assert.equal((await request('/api/scores?page=abc')).status, 400);
   assert.equal((await request(`/api/scores/${score.submissionId}`, 'DELETE')).status, 401);
