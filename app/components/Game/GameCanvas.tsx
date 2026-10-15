@@ -61,18 +61,22 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
   const [dimensions, setDimensions] = React.useState({ width: 800, height: 600 });
 
   useEffect(() => {
+    const parent = canvasRef.current?.parentElement;
+    if (!parent) return;
+
     const handleResize = () => {
       setDimensions({
-        width: window.innerWidth,
-        height: window.innerHeight
+        width: parent.clientWidth,
+        height: parent.clientHeight,
       });
     };
 
     // Initial resize
     handleResize();
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    const observer = new ResizeObserver(handleResize);
+    observer.observe(parent);
+    return () => observer.disconnect();
   }, []);
   
   // Game Constants
