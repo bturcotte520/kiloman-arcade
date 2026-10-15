@@ -1,6 +1,8 @@
 import React, { useCallback, useRef, useEffect } from 'react';
 import { GameStatus, PlayerState, GameConfig, LevelEntity, MonsterState, ScoreState } from './types';
 import { GameSFX } from '@/app/lib/sfx';
+import anacondaLogo from '@/logos/ana.png';
+import kiloLogo from '@/kilonw.png';
 
 const INPUT_EVENT_NAME = 'kiloman:input';
 const MENU_EVENT_NAME = 'kiloman:menu-action';
@@ -117,6 +119,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
   const updateRef = useRef<() => void>(() => {});
   const drawRef = useRef<(ctx: CanvasRenderingContext2D) => void>(() => {});
   const sfxRef = useRef<GameSFX | null>(null);
+  const adLogosRef = useRef<{ kilo: HTMLImageElement; anaconda: HTMLImageElement } | null>(null);
+
+  useEffect(() => {
+    const kilo = new window.Image();
+    const anaconda = new window.Image();
+    kilo.src = kiloLogo.src;
+    anaconda.src = anacondaLogo.src;
+    adLogosRef.current = { kilo, anaconda };
+    return () => { adLogosRef.current = null; };
+  }, []);
 
   useEffect(() => {
     sfxRef.current = new GameSFX();
@@ -463,21 +475,172 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
         }
         ctx.fillStyle = '#efb72b';
         ctx.fillRect(originX + 390, baseY - 26, 320, 4);
-        ctx.fillStyle = '#080e13';
-        ctx.fillRect(originX + 1020, baseY - 130, 240, 72);
-        ctx.fillStyle = '#f1efe6';
-        ctx.fillRect(originX + 1030, baseY - 122, 220, 2);
-        ctx.font = 'bold 20px Arial, sans-serif';
-        ctx.textAlign = 'left';
-        ctx.fillText('42 St - New York', originX + 1034, baseY - 94);
-        ctx.font = '12px Arial, sans-serif';
-        ctx.fillText('Uptown & Downtown', originX + 1034, baseY - 73);
       }
 
       ctx.restore();
     };
 
     const streetY = h - 72 - cameraY * 0.05;
+
+    // A distant Times Square landmark stays centered; the nearer skyline passes in front.
+    ctx.save();
+    const squareScale = Math.min(1.15, w / 740, h / 680);
+    ctx.translate(w / 2, Math.max(40, h * 0.05) - cameraY * 0.02);
+    ctx.scale(squareScale, squareScale);
+
+    const squareGlow = ctx.createRadialGradient(0, 190, 30, 0, 220, 520);
+    squareGlow.addColorStop(0, 'rgba(245, 195, 68, 0.18)');
+    squareGlow.addColorStop(0.6, 'rgba(40, 137, 164, 0.08)');
+    squareGlow.addColorStop(1, 'rgba(40, 137, 164, 0)');
+    ctx.fillStyle = squareGlow;
+    ctx.fillRect(-540, -100, 1080, 800);
+
+    // Glass towers recede toward a central canyon, with illuminated side faces.
+    const towers = [
+      { x: -650, y: 80, width: 140, depth: 65, rise: 34, light: '#184957' },
+      { x: -510, y: -25, width: 210, depth: 45, rise: 28, light: '#54502a' },
+      { x: 320, y: -10, width: 220, depth: 80, rise: -42, light: '#1b523a' },
+      { x: -280, y: 30, width: 560, depth: 40, rise: -24, light: '#3a4349' },
+    ];
+    towers.forEach((tower) => {
+      const facade = ctx.createLinearGradient(tower.x, 0, tower.x + tower.width, 0);
+      facade.addColorStop(0, '#0b1520');
+      facade.addColorStop(0.8, '#1e303b');
+      facade.addColorStop(1, '#35424a');
+      ctx.fillStyle = facade;
+      ctx.fillRect(tower.x, tower.y, tower.width, 780);
+      const side = ctx.createLinearGradient(tower.x + tower.width, 0, tower.x + tower.width + tower.depth, 0);
+      side.addColorStop(0, tower.light);
+      side.addColorStop(1, '#080f19');
+      ctx.fillStyle = side;
+      ctx.beginPath();
+      ctx.moveTo(tower.x + tower.width, tower.y);
+      ctx.lineTo(tower.x + tower.width + tower.depth, tower.y + tower.rise);
+      ctx.lineTo(tower.x + tower.width + tower.depth, 800);
+      ctx.lineTo(tower.x + tower.width, 800);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#101b26';
+      ctx.beginPath();
+      ctx.moveTo(tower.x, tower.y);
+      ctx.lineTo(tower.x + tower.depth, tower.y + tower.rise);
+      ctx.lineTo(tower.x + tower.width + tower.depth, tower.y + tower.rise);
+      ctx.lineTo(tower.x + tower.width, tower.y);
+      ctx.closePath();
+      ctx.fill();
+      for (let row = 0; row < 35; row++) {
+        for (let col = 0; col < tower.width / 18 - 1; col++) {
+          ctx.fillStyle = seededRandom(row * 51 + col * 17) > 0.65 ? '#657578' : '#253946';
+          ctx.fillRect(tower.x + 7 + col * 18, tower.y + 9 + row * 22, 7, 11);
+        }
+      }
+      ctx.strokeStyle = 'rgba(129, 164, 173, 0.2)';
+      ctx.lineWidth = 1;
+      for (let col = 0; col <= tower.width; col += 36) {
+        ctx.beginPath();
+        ctx.moveTo(tower.x + col, tower.y);
+        ctx.lineTo(tower.x + col, 800);
+        ctx.stroke();
+      }
+    });
+
+    const drawAd = (x: number, y: number, width: number, height: number, skew: number, brand: 'kilo' | 'anaconda' | 'message') => {
+      ctx.save();
+      ctx.transform(1, skew, 0, 1, x, y);
+      const isKilo = brand === 'kilo';
+      const isMessage = brand === 'message';
+      const accent = isKilo || isMessage ? '#f5c344' : '#43b02a';
+
+      // Deep housings, edge highlights, and skewed faces give each LED wall physical depth.
+      ctx.fillStyle = '#03070b';
+      ctx.fillRect(-7, -7, width + 23, height + 23);
+      ctx.fillStyle = '#33434b';
+      ctx.fillRect(-5, -5, width + 10, height + 10);
+      ctx.shadowColor = accent;
+      ctx.shadowBlur = 22;
+      ctx.fillStyle = accent;
+      ctx.fillRect(0, 0, width, height);
+      ctx.shadowBlur = 0;
+      const display = ctx.createLinearGradient(0, 0, width, height);
+      display.addColorStop(0, isKilo ? '#fffa78' : isMessage ? '#ffe27b' : '#142d28');
+      display.addColorStop(0.55, isKilo ? '#f5ef4c' : isMessage ? '#f5c344' : '#061915');
+      display.addColorStop(1, isKilo ? '#b7a922' : isMessage ? '#d69a28' : '#154b31');
+      ctx.fillStyle = display;
+      ctx.fillRect(0, 0, width, height);
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, 0, width, height);
+      ctx.clip();
+
+      if (isMessage) {
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#111827';
+        const lines = ['Built with Kilo Code', 'and Anaconda Packages', 'in 1 prompt, 15 minutes,', 'and $1.59'];
+        lines.forEach((line, index) => {
+          let fontSize = index === 3 ? 48 : 36;
+          ctx.font = `${fontSize}px Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif`;
+          while (ctx.measureText(line).width > width - 40 && fontSize > 18) {
+            ctx.font = `${--fontSize}px Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif`;
+          }
+          ctx.fillText(line, width / 2, 41 + index * 49);
+        });
+      } else {
+        // Oversized orbital graphics and the supplied marks read as ads, not street signage.
+        ctx.strokeStyle = isKilo ? 'rgba(0, 0, 0, 0.10)' : 'rgba(67, 176, 42, 0.18)';
+        ctx.lineWidth = 12;
+        for (let ring = 0; ring < 4; ring++) {
+          ctx.beginPath();
+          ctx.ellipse(width * 0.8, height * 0.6, width * (0.45 + ring * 0.23), height * (0.35 + ring * 0.2), -0.5, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        const image = adLogosRef.current?.[brand];
+        const size = Math.min(width * 0.7, height * 0.62);
+        if (image?.complete && image.naturalWidth > 0) {
+          const imageScale = Math.min(size / image.naturalWidth, size / image.naturalHeight);
+          const imageWidth = image.naturalWidth * imageScale;
+          const imageHeight = image.naturalHeight * imageScale;
+          ctx.drawImage(image, (width - imageWidth) / 2, (height - imageHeight) / 2 - height * 0.08, imageWidth, imageHeight);
+        }
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = `bold ${Math.min(25, width / 9)}px Arial, sans-serif`;
+        ctx.fillStyle = isKilo ? '#111511' : '#b9f3a5';
+        ctx.fillText(isKilo ? 'KILO CODE' : 'ANACONDA', width / 2, height * 0.85);
+      }
+
+      const sheen = ctx.createLinearGradient(0, 0, width * 0.8, height);
+      sheen.addColorStop(0, 'rgba(255, 255, 255, 0.18)');
+      sheen.addColorStop(0.4, 'rgba(255, 255, 255, 0)');
+      sheen.addColorStop(1, 'rgba(0, 0, 0, 0.12)');
+      ctx.fillStyle = sheen;
+      ctx.fillRect(0, 0, width, height);
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.13)';
+      for (let scanY = 2; scanY < height; scanY += 4) ctx.fillRect(0, scanY, width, 1);
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.12)';
+      ctx.lineWidth = 1;
+      for (let panelX = 64; panelX < width; panelX += 64) {
+        ctx.beginPath();
+        ctx.moveTo(panelX, 0);
+        ctx.lineTo(panelX, height);
+        ctx.stroke();
+      }
+      ctx.restore();
+      ctx.strokeStyle = 'rgba(245, 255, 247, 0.65)';
+      ctx.strokeRect(0, 0, width, height);
+      ctx.restore();
+    };
+
+    drawAd(-655, 138, 130, 230, 0.22, 'anaconda');
+    drawAd(-505, 0, 205, 300, 0.13, 'kilo');
+    drawAd(-505, 320, 205, 170, 0.13, 'anaconda');
+    drawAd(335, 22, 215, 295, -0.16, 'anaconda');
+    drawAd(335, 340, 215, 170, -0.16, 'kilo');
+    drawAd(-265, 355, 250, 150, 0.04, 'anaconda');
+    drawAd(8, 365, 255, 150, -0.04, 'kilo');
+    drawAd(-275, 92, 550, 238, 0, 'message');
+    ctx.restore();
+
     drawSkyline(0.16, streetY - 30, 0.9);
     ctx.fillStyle = '#101920';
     ctx.fillRect(0, streetY, w, h - streetY);
@@ -659,25 +822,69 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, setGameState, onScor
     const cx = x + m.w / 2;
     const cy = y + m.h / 2;
 
-    // Spiky Body
-    ctx.fillStyle = '#ef4444'; // Red 500
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale((m.vx < 0 ? -1 : 1) * m.w / 40, m.h / 40);
+
+    // A curved pink tail and round ears distinguish rats from the rooftop scenery.
+    ctx.strokeStyle = '#cf8f94';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
     ctx.beginPath();
-    ctx.moveTo(cx, y); // Top
-    ctx.lineTo(x + m.w, cy); // Right
-    ctx.lineTo(cx, y + m.h); // Bottom
-    ctx.lineTo(x, cy); // Left
+    ctx.moveTo(-14, 8);
+    ctx.bezierCurveTo(-33, 16, -36, -3, -27, -4);
+    ctx.stroke();
+
+    ctx.fillStyle = '#777b80';
+    ctx.strokeStyle = '#111820';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.ellipse(-4, 4, 15, 14, -0.15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#a0a1a2';
+    ctx.beginPath();
+    ctx.moveTo(2, -6);
+    ctx.quadraticCurveTo(16, -9, 20, 7);
+    ctx.quadraticCurveTo(12, 15, 2, 10);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.ellipse(4, -10, 7, 9, -0.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#cf8f94';
+    ctx.beginPath();
+    ctx.ellipse(4, -10, 3.5, 5, -0.2, 0, Math.PI * 2);
     ctx.fill();
 
-    // Inner Core
-    ctx.fillStyle = '#7f1d1d'; // Red 900
+    ctx.fillStyle = '#ff705c';
     ctx.beginPath();
-    ctx.arc(cx, cy, 10, 0, Math.PI * 2);
+    ctx.arc(12, -1, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#f4f2e9';
+    ctx.fillRect(12, -2, 1, 1);
+    ctx.fillStyle = '#e7a1a8';
+    ctx.beginPath();
+    ctx.arc(19, 6, 2.5, 0, Math.PI * 2);
     ctx.fill();
 
-    // Angry Eyes
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(cx - 8, cy - 5, 5, 5);
-    ctx.fillRect(cx + 3, cy - 5, 5, 5);
+    ctx.strokeStyle = '#d1d5d7';
+    ctx.lineWidth = 1;
+    for (const whiskerY of [0, 6, 12]) {
+      ctx.beginPath();
+      ctx.moveTo(15, 6);
+      ctx.lineTo(26, whiskerY);
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = '#cf8f94';
+    ctx.fillRect(-13, 15, 9, 5);
+    ctx.fillRect(5, 15, 9, 5);
+    ctx.restore();
   };
 
   const drawChip = (ctx: CanvasRenderingContext2D, entity: LevelEntity, cameraX: number, cameraY: number) => {

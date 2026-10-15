@@ -264,14 +264,6 @@ body {
   transition: transform 120ms ease, box-shadow 120ms ease;
 }
 
-.kiloman-banner {
-  background: #f5c344;
-  color: #111827;
-  font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
-  font-size: 28px;
-  letter-spacing: 0.09em;
-}
-
 .arcade-button:hover,
 .arcade-button:focus-visible {
   transform: translateY(2px);

@@ -309,8 +309,8 @@ const UIOverlay: React.FC<UIOverlayProps> = ({
           <div className="max-w-6xl w-full nyc-menu-content">
             <div className="nyc-route-row nyc-route-row--home mb-4" aria-label="New York City routes">
               <span className="nyc-route-badge">N</span>
-              <span className="nyc-route-badge nyc-route-badge--blue">Y</span>
-              <span className="nyc-route-badge nyc-route-badge--orange">C</span>
+              <span className="nyc-route-badge nyc-route-badge--orange">Y</span>
+              <span className="nyc-route-badge nyc-route-badge--blue">C</span>
             </div>
             <div className="nyc-title-wrap mb-7 text-center">
               <p className="nyc-station-label">UPTOWN / DOWNTOWN / ALL NIGHT</p>
